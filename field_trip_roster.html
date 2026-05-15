@@ -963,6 +963,7 @@ function renderShareTab(){
       </div>
       <p class="hint">💡 The file must be on a public URL — your computer's local path won't work for chaperones.</p>
     </div>
+    <div id="fb-push-banner" style="display:none;margin:8px 0 4px;padding:10px 14px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:8px;color:#065f46;font-size:.92rem;font-weight:500"></div>
     <div id="links-out"></div>
   `;
   setTimeout(restoreLinks,0);
@@ -991,7 +992,28 @@ function generateLinks(){
       });
     });
   });
-  fbTrip(S.sessionId).set({tripName:S.tripName||'',buses:busesData});
+  // Count totals for confirmation banner
+  const totalBuses=Object.keys(busesData).length;
+  const totalStudents=Object.values(busesData).reduce((sum,bus)=>sum+Object.values(bus.chaps||{}).reduce((s2,ch)=>s2+Object.keys(ch.students||{}).length,0),0);
+
+  fbTrip(S.sessionId).set({tripName:S.tripName||'',buses:busesData})
+    .then(()=>{
+      const banner=$('fb-push-banner');
+      if(banner){
+        banner.textContent=`✅ Firebase updated — ${totalBuses} bus${totalBuses!==1?'es':''}, ${totalStudents} student${totalStudents!==1?'s':''} — all previous data cleared`;
+        banner.style.display='block';
+        clearTimeout(banner._t);
+        banner._t=setTimeout(()=>{banner.style.display='none';},8000);
+      }
+    })
+    .catch(err=>{
+      const banner=$('fb-push-banner');
+      if(banner){
+        banner.textContent='❌ Firebase write failed: '+err.message;
+        banner.style.color='#dc2626';
+        banner.style.display='block';
+      }
+    });
 
   let html='';
   const qrItems=[];
