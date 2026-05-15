@@ -1170,17 +1170,27 @@ function renderChapView(){
   setRoot(`<div style="min-height:100vh;display:flex;flex-direction:column">
     <div class="chap-view-hdr" style="background:${phaseColor}">
       <h1>${esc(CV.busName||'Bus')} — ${esc(CV.chapName||'Chaperone')}</h1>
-      <p>${phaseLabel} · Tap to mark each student</p>
+      <p>Tap a student to mark them</p>
+    </div>
+    <div class="phase-bar">
+      <span class="phase-bar-lbl">Phase:</span>
+      <button class="phase-btn ${isBoarding?'active-boarding':'inactive'}" onclick="setChapPhase('boarding')">🚌 Boarding</button>
+      <button class="phase-btn ${!isBoarding?'active-endofnight':'inactive'}" onclick="setChapPhase('endofnight')">🌙 End of Night</button>
     </div>
     <div style="flex:1">
       ${rows||'<p style="padding:32px;text-align:center;color:#6b7280">No students loaded.<br>Check your connection and refresh.</p>'}
     </div>
     <div class="chap-footer">
-      <span class="fp">✓ ${checked} On Bus</span>
+      <span class="fp">✓ ${checked} ${isBoarding?'On Bus':'On Bus'}</span>
       <span class="fa">✕ ${missing} ${isBoarding?'Absent':'Missing'}</span>
       <span class="fn">○ ${pending} Pending</span>
     </div>
   </div>`);
+}
+
+function setChapPhase(phase){
+  chapPhase=phase;
+  renderChapView();
 }
 </script>
 </body>
