@@ -973,7 +973,8 @@ function generateLinks(){
   if(!base){alert('Please enter the hosted URL of this file.');return;}
 
   const groups=computeGroups();
-  const busEntries=Object.entries(groups);
+  const sortBusEntries=e=>e.sort(([,a],[,b])=>{const n=s=>parseInt((s.name||'').replace(/\D+/g,''))||0;return n(a)-n(b)||(a.name||'').localeCompare(b.name||'');});
+  const busEntries=sortBusEntries(Object.entries(groups));
   if(!busEntries.length){alert('Set up buses in the Chaperones tab first.');return;}
 
   // Push group structure to Firebase so dashboard can subscribe
