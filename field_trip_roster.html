@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Field Trip Roster</title>
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -185,10 +186,25 @@ const autoBase=()=>['http:','https:'].includes(location.protocol)?location.origi
 const setRoot=html=>$('root').innerHTML=html;
 
 // ═══════════════════════════════════════════════
-// GUN
+// FIREBASE SYNC
 // ═══════════════════════════════════════════════
-const gun=Gun(['https://peer.wallie.io/gun','https://gundb-relay-mlc.glitch.me/gun','https://gun-us.herokuapp.com/gun']);
-const gdb=s=>gun.get('ftr27-'+s);
+let _fbDb=null;
+function fbReady(){return!!_fbDb;}
+function fbr(...parts){return _fbDb?_fbDb.ref(parts.join('/')):null;}
+function fbTrip(sid,...parts){return fbr('ftr',sid,...parts);}
+function fbInit(cfg){
+  try{
+    const c=typeof cfg==='string'?JSON.parse(cfg):cfg;
+    if(!c||!c.databaseURL){console.warn('Firebase config missing databaseURL');return false;}
+    try{firebase.app();}catch(e){firebase.initializeApp(c);}
+    _fbDb=firebase.database();
+    return true;
+  }catch(e){console.error('Firebase init failed:',e);return false;}
+}
+function fbLoad(){
+  try{const c=JSON.parse(localStorage.getItem('ftr_fb')||'null');if(c)fbInit(c);}catch(e){}
+}
+fbLoad();
 
 // ═══════════════════════════════════════════════
 // ROUTING
@@ -259,6 +275,10 @@ function renderShell(){
     ?`<span class="sync-status sync-ok">✓ Synced ${S.sheetsLastSync}</span>`
     :`<span class="sync-status sync-pending">Not connected</span>`;
 
+  const fbStatus=fbReady()
+    ?'<span class="sync-status sync-ok">✓ Connected</span>'
+    :'<span class="sync-status" style="background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;padding:2px 8px;border-radius:4px;font-size:.72rem">⚠ Not configured</span>';
+
   const sheetsBanner=`
     <div class="sheets-banner">
       <div class="sheets-banner-icon">📊</div>
@@ -269,6 +289,28 @@ function renderShell(){
           <button class="btn btn-primary" id="import-btn" style="background:var(--teal)" onclick="importFromSheets()">⬇ Sync from Google Sheets</button>
           ${S.sheetsLastSync?`<span class="hint">Last synced: ${S.sheetsLastSync}</span>`:''}
         </div>
+      </div>
+    </div>
+    <div class="sheets-banner" style="margin-top:8px">
+      <div class="sheets-banner-icon">🔥</div>
+      <div class="sheets-banner-body">
+        <div class="sheets-banner-title" style="margin-bottom:4px">Live Sync (Firebase) ${fbStatus}</div>
+        ${fbReady()
+          ?'<p class="hint">Live sync is active. Chaperone check-ins will update the dashboard in real time.</p>'
+          :`<p class="hint" style="margin-bottom:8px">Required for the live dashboard to update. Takes ~5 minutes to set up — free with your Google account.</p>
+           <details style="margin-bottom:8px">
+             <summary style="cursor:pointer;font-size:.8rem;color:var(--blue);font-weight:600">📋 How to set up Firebase (5 steps)</summary>
+             <ol style="font-size:.78rem;line-height:1.8;padding:8px 0 4px 18px;color:#374151">
+               <li>Go to <a href="https://console.firebase.google.com" target="_blank" style="color:var(--blue)">console.firebase.google.com</a> and create a project</li>
+               <li>In your project, go to <strong>Build → Realtime Database → Create database</strong></li>
+               <li>Choose a location, then select <strong>"Start in test mode"</strong></li>
+               <li>Go to <strong>Project Settings (⚙️) → General → Your apps → Add app → Web (&lt;/&gt;)</strong>, register the app, copy the <code>firebaseConfig</code> object</li>
+               <li>Paste the config JSON below and click Save</li>
+             </ol>
+           </details>
+           <textarea id="fb-cfg-input" rows="4" style="width:100%;font-size:.72rem;font-family:monospace;padding:6px;border:1px solid #d1d5db;border-radius:6px;resize:vertical" placeholder='{"apiKey":"...","authDomain":"...","databaseURL":"https://your-project-default-rtdb.firebaseio.com","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+           <button class="btn btn-primary" style="margin-top:6px" onclick="saveFbConfig()">Save Firebase Config</button>`
+        }
       </div>
     </div>`;
 
@@ -540,6 +582,18 @@ function newTrip(){
 
 function goDash(){
   window.open(`${location.pathname}?v=d&s=${S.sessionId}`,'_blank');
+}
+
+function saveFbConfig(){
+  const raw=($('fb-cfg-input').value||'').trim();
+  if(!raw){alert('Please paste your Firebase config JSON.');return;}
+  try{
+    const cfg=JSON.parse(raw);
+    if(!cfg.databaseURL){alert('Config is missing "databaseURL". Make sure you enabled Realtime Database in your Firebase project and copied the full config.');return;}
+    localStorage.setItem('ftr_fb',JSON.stringify(cfg));
+    if(fbInit(cfg)){alert('✅ Firebase connected! Live sync is now active.');renderShell();}
+    else{alert('❌ Firebase connection failed. Check the config and try again.');}
+  }catch(e){alert('Invalid JSON. Please paste the full firebaseConfig object.');}
 }
 
 // ═══════════════════════════════════════════════
@@ -905,15 +959,15 @@ function generateLinks(){
   const busEntries=Object.entries(groups);
   if(!busEntries.length){alert('Set up buses in the Chaperones tab first.');return;}
 
-  // Push all group data to Gun for chaperone views to read
+  // Push group structure to Firebase so dashboard can subscribe
+  if(!fbReady()){alert('⚠️ Firebase is not configured — live sync will not work.\n\nGo to Setup → Live Sync to add your Firebase config.');return;}
   busEntries.forEach(([bid,bus])=>{
-    gdb(S.sessionId).get('buses').get(bid).put({name:bus.name});
+    fbTrip(S.sessionId,'buses',bid).update({name:bus.name});
     Object.entries(bus.chaps).forEach(([cid,chap])=>{
-      gdb(S.sessionId).get('buses').get(bid).get('chaps').get(cid).put({name:chap.name});
+      fbTrip(S.sessionId,'buses',bid,'chaps',cid).update({name:chap.name,count:chap.students.length});
       chap.students.forEach((st,i)=>{
-        gdb(S.sessionId).get('buses').get(bid).get('chaps').get(cid).get('students').get('s'+i).put({name:st.name,status:'',boardingStatus:''});
+        fbTrip(S.sessionId,'buses',bid,'chaps',cid,'students','s'+i).set({name:st.name,status:'',boardingStatus:''});
       });
-      gdb(S.sessionId).get('buses').get(bid).get('chaps').get(cid).get('count').put(chap.students.length);
     });
   });
 
@@ -974,54 +1028,32 @@ function initDashboard(){
     });
   });
   renderDashView();
-  // Subscribe to phase changes
-  gdb(SID).get('phase').on(phase=>{
-    dashPhase=phase||'boarding';
+  if(!fbReady()){return;}
+  // Firebase: subscribe to phase
+  fbTrip(SID,'phase').on('value',snap=>{
+    dashPhase=snap.val()||'boarding';
     renderDashView();
   });
-  // Subscribe to live status + submitted updates
+  // Firebase: subscribe to all buses/chaps/students + submitted
   Object.entries(groups).forEach(([bid,bus])=>{
-    Object.entries(bus.chaps).forEach(([cid,chap])=>{
-      chap.students.forEach((_,i)=>{
-        gdb(SID).get('buses').get(bid).get('chaps').get(cid).get('students').get('s'+i).on(data=>{
-          if(!data||!DS[bid]||!DS[bid].chaps[cid])return;
-          DS[bid].chaps[cid].students['s'+i].status=data.status||'';
-          DS[bid].chaps[cid].students['s'+i].boardingStatus=data.boardingStatus||'';
-          refreshDashStats();
+    Object.entries(bus.chaps).forEach(([cid])=>{
+      fbTrip(SID,'buses',bid,'chaps',cid,'students').on('value',snap=>{
+        const data=snap.val()||{};
+        Object.entries(data).forEach(([sId,st])=>{
+          if(!DS[bid]?.chaps[cid]?.students[sId])return;
+          DS[bid].chaps[cid].students[sId].status=st.status||'';
+          DS[bid].chaps[cid].students[sId].boardingStatus=st.boardingStatus||'';
         });
+        refreshDashStats();
       });
-      gdb(SID).get('buses').get(bid).get('chaps').get(cid).get('submitted').on(val=>{
-        if(!DS[bid]||!DS[bid].chaps[cid])return;
-        DS[bid].chaps[cid].submitted=val||false;
+      fbTrip(SID,'buses',bid,'chaps',cid,'submitted').on('value',snap=>{
+        if(!DS[bid]?.chaps[cid])return;
+        DS[bid].chaps[cid].submitted=snap.val()||false;
         refreshDashStats();
       });
     });
   });
-  // Poll GUN every 10 seconds as a fallback refresh
-  pollGUN();
-  setInterval(pollGUN,10000);
   setInterval(updatePollLabel,3000);
-}
-
-function pollGUN(){
-  const groups=computeGroups();
-  Object.entries(groups).forEach(([bid,bus])=>{
-    Object.entries(bus.chaps).forEach(([cid,chap])=>{
-      chap.students.forEach((_,i)=>{
-        gdb(SID).get('buses').get(bid).get('chaps').get(cid).get('students').get('s'+i).once(data=>{
-          if(!data||!DS[bid]||!DS[bid].chaps[cid])return;
-          DS[bid].chaps[cid].students['s'+i].status=data.status||'';
-          DS[bid].chaps[cid].students['s'+i].boardingStatus=data.boardingStatus||'';
-        });
-      });
-      gdb(SID).get('buses').get(bid).get('chaps').get(cid).get('submitted').once(val=>{
-        if(!DS[bid]||!DS[bid].chaps[cid])return;
-        DS[bid].chaps[cid].submitted=val||false;
-      });
-    });
-  });
-  lastDashPoll=Date.now();
-  setTimeout(()=>{refreshDashStats();updatePollLabel();},800);
 }
 
 function updatePollLabel(){
@@ -1033,7 +1065,7 @@ function updatePollLabel(){
 
 function setPhase(phase){
   dashPhase=phase;
-  gdb(SID).get('phase').put(phase);
+  if(fbReady())fbTrip(SID,'phase').set(phase);
   renderDashView();
 }
 
@@ -1164,7 +1196,7 @@ let CV={busName:'',chapName:'',students:{}};
 let chapPhase='boarding'; // synced from GUN: 'boarding' | 'endofnight'
 
 function initChaperone(){
-  // Pre-populate names from URL params instantly (no GUN wait needed)
+  // Pre-populate names from URL params instantly
   if(URL_BUS) CV.busName=decodeURIComponent(URL_BUS);
   if(URL_CHAP) CV.chapName=decodeURIComponent(URL_CHAP);
   if(URL_NAMES){
@@ -1173,20 +1205,21 @@ function initChaperone(){
     });
   }
   renderChapView();
-
-  // GUN: sync live status updates
-  const ref=gdb(SID).get('buses').get(BID).get('chaps').get(CID);
-  // Listen for phase changes from teacher's device
-  gdb(SID).get('phase').on(phase=>{
-    chapPhase=phase||'boarding';
+  if(!fbReady())return;
+  // Firebase: listen for phase changes from teacher
+  fbTrip(SID,'phase').on('value',snap=>{
+    chapPhase=snap.val()||'boarding';
     renderChapView();
   });
-  ref.get('students').map().on((data,sId)=>{
-    if(!data||!sId||sId==='_'||typeof data!=='object'||!data.name)return;
-    if(!CV.students[sId])CV.students[sId]={};
-    CV.students[sId].name=data.name;
-    CV.students[sId].status=data.status||'';
-    CV.students[sId].boardingStatus=data.boardingStatus||'';
+  // Firebase: listen for status updates (e.g. if teacher resets)
+  fbTrip(SID,'buses',BID,'chaps',CID,'students').on('value',snap=>{
+    const data=snap.val()||{};
+    Object.entries(data).forEach(([sId,st])=>{
+      if(!CV.students[sId])CV.students[sId]={};
+      CV.students[sId].name=st.name||CV.students[sId].name||'';
+      CV.students[sId].status=st.status||'';
+      CV.students[sId].boardingStatus=st.boardingStatus||'';
+    });
     renderChapView();
   });
 }
@@ -1196,7 +1229,7 @@ function setStatus(sId,value){
   const cur=CV.students[sId]?.[field];
   const next=cur===value?'':value;
   CV.students[sId][field]=next;
-  gdb(SID).get('buses').get(BID).get('chaps').get(CID).get('students').get(sId).get(field).put(next);
+  if(fbReady())fbTrip(SID,'buses',BID,'chaps',CID,'students',sId).update({[field]:next});
   renderChapView();
 }
 
@@ -1267,7 +1300,7 @@ function submitCheckIn(){
   const absentLabel=isBoarding?'Absent':'Missing';
   const msg=`Submit ${phaseLabel} check-in?\n\n✓ ${checked} On Bus\n✕ ${absent} ${absentLabel}\n○ ${pending} Pending${pending>0?'\n\n⚠️ '+pending+' student(s) not yet marked.':'\n\n✅ All students marked!'}`;
   if(!confirm(msg))return;
-  gdb(SID).get('buses').get(BID).get('chaps').get(CID).get('submitted').put(true);
+  if(fbReady())fbTrip(SID,'buses',BID,'chaps',CID,'submitted').set(true);
   setRoot(`<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;background:#f9fafb">
     <div style="font-size:3.5rem;margin-bottom:12px">✅</div>
     <h2 style="font-size:1.4rem;font-weight:800;color:#15803d;margin-bottom:6px">Check-In Submitted!</h2>
@@ -1277,7 +1310,7 @@ function submitCheckIn(){
       <div style="font-size:1.1rem;font-weight:700;color:#dc2626;padding:4px 0">✕ ${absent} ${esc(absentLabel)}</div>
       ${pending?`<div style="font-size:1.1rem;font-weight:700;color:#9ca3af;padding:4px 0">○ ${pending} Pending</div>`:''}
     </div>
-    <button class="btn" onclick="gdb(SID).get('buses').get(BID).get('chaps').get(CID).get('submitted').put(false);renderChapView()" style="background:#f3f4f6;color:#374151;border:none;padding:10px 24px">← Edit Check-In</button>
+    <button class="btn" onclick="if(fbReady())fbTrip(SID,'buses',BID,'chaps',CID,'submitted').set(false);renderChapView()" style="background:#f3f4f6;color:#374151;border:none;padding:10px 24px">← Edit Check-In</button>
   </div>`);
 }
 </script>
