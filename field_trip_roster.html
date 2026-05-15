@@ -978,18 +978,20 @@ function generateLinks(){
   const busEntries=sortBusEntries(Object.entries(groups));
   if(!busEntries.length){alert('Set up buses in the Chaperones tab first.');return;}
 
-  // Push group structure to Firebase so dashboard can subscribe
+  // Push group structure to Firebase — replace entirely to avoid stale data
   if(!fbReady()){alert('⚠️ Firebase is not configured — live sync will not work.\n\nGo to Setup → Live Sync to add your Firebase config.');return;}
-  fbTrip(S.sessionId).update({tripName:S.tripName||''});
+  // Build the complete buses object, then set() it all at once (wipes old data cleanly)
+  const busesData={};
   busEntries.forEach(([bid,bus])=>{
-    fbTrip(S.sessionId,'buses',bid).update({name:bus.name});
+    busesData[bid]={name:bus.name,chaps:{}};
     Object.entries(bus.chaps).forEach(([cid,chap])=>{
-      fbTrip(S.sessionId,'buses',bid,'chaps',cid).update({name:chap.name,count:chap.students.length});
+      busesData[bid].chaps[cid]={name:chap.name,count:chap.students.length,students:{}};
       chap.students.forEach((st,i)=>{
-        fbTrip(S.sessionId,'buses',bid,'chaps',cid,'students','s'+i).set({name:st.name,status:'',boardingStatus:''});
+        busesData[bid].chaps[cid].students['s'+i]={name:st.name,status:'',boardingStatus:''};
       });
     });
   });
+  fbTrip(S.sessionId).set({tripName:S.tripName||'',buses:busesData});
 
   let html='';
   const qrItems=[];
