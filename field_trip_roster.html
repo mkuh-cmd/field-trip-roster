@@ -980,6 +980,7 @@ function generateLinks(){
 
   // Push group structure to Firebase so dashboard can subscribe
   if(!fbReady()){alert('⚠️ Firebase is not configured — live sync will not work.\n\nGo to Setup → Live Sync to add your Firebase config.');return;}
+  fbTrip(S.sessionId).update({tripName:S.tripName||''});
   busEntries.forEach(([bid,bus])=>{
     fbTrip(S.sessionId,'buses',bid).update({name:bus.name});
     Object.entries(bus.chaps).forEach(([cid,chap])=>{
@@ -1148,6 +1149,29 @@ let lastDashPoll=Date.now();
 
 function initDashboard(){
   loadS();
+  DS={};
+  setRoot('<div style="text-align:center;padding:80px 32px;color:#6b7280;font-size:1rem">⏳ Loading dashboard...</div>');
+  if(!fbReady()){
+    // No Firebase — fall back to local setup only
+    buildDSFromLocal();renderDashView();return;
+  }
+  // Load trip name + full group structure from Firebase (works on any device)
+  fbTrip(SID,'tripName').once('value',snap=>{if(snap.val())S.tripName=snap.val();});
+  fbTrip(SID,'buses').once('value',snap=>{
+    const busData=snap.val()||{};
+    if(Object.keys(busData).length){
+      buildDSFromFirebase(busData);
+    } else {
+      buildDSFromLocal(); // teacher's device before Generate Links clicked
+    }
+    renderDashView();
+    setupDashSubscriptions();
+  });
+  fbTrip(SID,'phase').on('value',snap=>{dashPhase=snap.val()||'boarding';renderDashView();});
+  setInterval(updatePollLabel,3000);
+}
+
+function buildDSFromLocal(){
   const groups=computeGroups();
   DS={};
   Object.entries(groups).forEach(([bid,bus])=>{
@@ -1157,16 +1181,25 @@ function initDashboard(){
       chap.students.forEach((st,i)=>{DS[bid].chaps[cid].students['s'+i]={name:st.name,status:'',boardingStatus:''};});
     });
   });
-  renderDashView();
-  if(!fbReady()){return;}
-  // Firebase: subscribe to phase
-  fbTrip(SID,'phase').on('value',snap=>{
-    dashPhase=snap.val()||'boarding';
-    renderDashView();
+}
+
+function buildDSFromFirebase(busData){
+  DS={};
+  Object.entries(busData).forEach(([bid,bus])=>{
+    if(!bus||!bus.name)return;
+    DS[bid]={name:bus.name,chaps:{}};
+    Object.entries(bus.chaps||{}).forEach(([cid,chap])=>{
+      DS[bid].chaps[cid]={name:chap.name||'',submitted:chap.submitted||false,students:{}};
+      Object.entries(chap.students||{}).forEach(([sId,st])=>{
+        DS[bid].chaps[cid].students[sId]={name:st.name||'',status:st.status||'',boardingStatus:st.boardingStatus||''};
+      });
+    });
   });
-  // Firebase: subscribe to all buses/chaps/students + submitted
-  Object.entries(groups).forEach(([bid,bus])=>{
-    Object.entries(bus.chaps).forEach(([cid])=>{
+}
+
+function setupDashSubscriptions(){
+  Object.entries(DS).forEach(([bid])=>{
+    Object.keys(DS[bid].chaps).forEach(cid=>{
       fbTrip(SID,'buses',bid,'chaps',cid,'students').on('value',snap=>{
         const data=snap.val()||{};
         Object.entries(data).forEach(([sId,st])=>{
@@ -1183,14 +1216,12 @@ function initDashboard(){
       });
     });
   });
-  setInterval(updatePollLabel,3000);
 }
 
 function forceRefresh(){
   if(!fbReady())return;
-  const groups=computeGroups();
-  Object.entries(groups).forEach(([bid,bus])=>{
-    Object.entries(bus.chaps).forEach(([cid])=>{
+  Object.entries(DS).forEach(([bid])=>{
+    Object.keys(DS[bid].chaps).forEach(cid=>{
       fbTrip(SID,'buses',bid,'chaps',cid,'students').once('value',snap=>{
         const data=snap.val()||{};
         Object.entries(data).forEach(([sId,st])=>{
