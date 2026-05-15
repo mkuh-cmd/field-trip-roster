@@ -965,6 +965,7 @@ function renderShareTab(){
     </div>
     <div id="links-out"></div>
   `;
+  setTimeout(restoreLinks,0);
 }
 
 function generateLinks(){
@@ -1017,6 +1018,46 @@ function generateLinks(){
 
   if(!html){alert('No grouped chaperones found. Assign chaperones to buses in the Groups tab first.');return;}
 
+  // Save generated links so they survive tab switches and page refreshes
+  S.generatedLinks=qrItems.map(({qid,link})=>({qid,link}));
+  saveS();
+
+  $('links-out').innerHTML=html;
+  qrItems.forEach(({qid,link})=>{
+    try{new QRCode($(qid),{text:link,width:150,height:150,correctLevel:QRCode.CorrectLevel.M});}catch(e){}
+  });
+}
+
+function restoreLinks(){
+  if(!S.generatedLinks||!S.generatedLinks.length)return;
+  const groups=computeGroups();
+  const sortBusEntries=e=>e.sort(([,a],[,b])=>{const n=s=>parseInt((s.name||'').replace(/\D+/g,''))||0;return n(a)-n(b)||(a.name||'').localeCompare(b.name||'');});
+  const busEntries=sortBusEntries(Object.entries(groups));
+  let html='';
+  const qrItems=[];
+  busEntries.forEach(([bid,bus])=>{
+    const chapEntries=Object.entries(bus.chaps);
+    if(!chapEntries.length)return;
+    html+=`<div class="bus-share-label">🚌 ${esc(bus.name)}</div>`;
+    chapEntries.forEach(([cid,chap])=>{
+      const namesParam=encodeURIComponent(chap.students.map(s=>s.name).join('|'));
+      const link=`${S.baseUrl}?v=c&s=${S.sessionId}&b=${bid}&c=${cid}&n=${namesParam}&bn=${encodeURIComponent(bus.name)}&cn=${encodeURIComponent(chap.name)}`;
+      const qid=`qr-${bid}-${cid}`;
+      html+=`<div class="link-item">
+        <div class="link-item-hdr">
+          <div>
+            <strong>${esc(chap.name)}</strong>
+            <span class="tag" style="margin-left:6px">${chap.students.length} student${chap.students.length!==1?'s':''}</span>
+          </div>
+          <button class="btn-sm" onclick="copyText('${esc(link)}',this)">Copy Link</button>
+        </div>
+        <div class="link-url">${esc(link)}</div>
+        <div class="qr-wrap" id="${qid}"></div>
+      </div>`;
+      qrItems.push({qid,link});
+    });
+  });
+  if(!html)return;
   $('links-out').innerHTML=html;
   qrItems.forEach(({qid,link})=>{
     try{new QRCode($(qid),{text:link,width:150,height:150,correctLevel:QRCode.CorrectLevel.M});}catch(e){}
