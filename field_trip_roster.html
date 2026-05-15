@@ -187,7 +187,7 @@ const setRoot=html=>$('root').innerHTML=html;
 // ═══════════════════════════════════════════════
 // GUN
 // ═══════════════════════════════════════════════
-const gun=Gun(['https://gun-manhattan.herokuapp.com/gun','https://peer.wallie.io/gun']);
+const gun=Gun(['https://peer.wallie.io/gun','https://gundb-relay-mlc.glitch.me/gun','https://gun-us.herokuapp.com/gun']);
 const gdb=s=>gun.get('ftr27-'+s);
 
 // ═══════════════════════════════════════════════
@@ -195,6 +195,7 @@ const gdb=s=>gun.get('ftr27-'+s);
 // ═══════════════════════════════════════════════
 const P=new URLSearchParams(location.search);
 const VIEW=P.get('v'),SID=P.get('s'),BID=P.get('b'),CID=P.get('c');
+const URL_NAMES=P.get('n'),URL_BUS=P.get('bn'),URL_CHAP=P.get('cn');
 window.addEventListener('DOMContentLoaded',()=>{
   if(VIEW==='c'&&SID&&BID&&CID) initChaperone();
   else if(VIEW==='d'&&SID) initDashboard();
@@ -923,7 +924,9 @@ function generateLinks(){
     if(!chapEntries.length)return;
     html+=`<div class="bus-share-label">🚌 ${esc(bus.name)}</div>`;
     chapEntries.forEach(([cid,chap])=>{
-      const link=`${base}?v=c&s=${S.sessionId}&b=${bid}&c=${cid}`;
+      // Encode student names in URL so roster loads instantly (no GUN wait)
+      const namesParam=encodeURIComponent(chap.students.map(s=>s.name).join('|'));
+      const link=`${base}?v=c&s=${S.sessionId}&b=${bid}&c=${cid}&n=${namesParam}&bn=${encodeURIComponent(bus.name)}&cn=${encodeURIComponent(chap.name)}`;
       const qid=`qr-${bid}-${cid}`;
       html+=`<div class="link-item">
         <div class="link-item-hdr">
@@ -1110,10 +1113,18 @@ let CV={busName:'',chapName:'',students:{}};
 let chapPhase='boarding'; // synced from GUN: 'boarding' | 'endofnight'
 
 function initChaperone(){
-  setRoot('<div style="text-align:center;padding:60px;color:#6b7280">Loading roster...</div>');
+  // Pre-populate names from URL params instantly (no GUN wait needed)
+  if(URL_BUS) CV.busName=decodeURIComponent(URL_BUS);
+  if(URL_CHAP) CV.chapName=decodeURIComponent(URL_CHAP);
+  if(URL_NAMES){
+    decodeURIComponent(URL_NAMES).split('|').forEach((name,i)=>{
+      if(name) CV.students['s'+i]={name,status:'',boardingStatus:''};
+    });
+  }
+  renderChapView();
+
+  // GUN: sync live status updates
   const ref=gdb(SID).get('buses').get(BID).get('chaps').get(CID);
-  gdb(SID).get('buses').get(BID).once(d=>{if(d&&d.name)CV.busName=d.name;});
-  ref.once(d=>{if(d&&d.name)CV.chapName=d.name;});
   // Listen for phase changes from teacher's device
   gdb(SID).get('phase').on(phase=>{
     chapPhase=phase||'boarding';
@@ -1127,7 +1138,6 @@ function initChaperone(){
     CV.students[sId].boardingStatus=data.boardingStatus||'';
     renderChapView();
   });
-  setTimeout(()=>{if(!Object.keys(CV.students).length)renderChapView();},4000);
 }
 
 function setStatus(sId,value){
