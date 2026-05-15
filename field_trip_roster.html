@@ -1219,6 +1219,25 @@ function setPhase(phase){
   renderDashView();
 }
 
+function showDashQR(){
+  const dashUrl=location.href.split('?')[0]+'?v=d&s='+SID;
+  // Create modal overlay
+  const overlay=document.createElement('div');
+  overlay.id='dash-qr-modal';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};
+  overlay.innerHTML=`
+    <div style="background:#fff;border-radius:16px;padding:28px 32px;text-align:center;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="font-size:1.1rem;font-weight:800;margin-bottom:4px">📊 Live Dashboard</div>
+      <div style="font-size:.8rem;color:#6b7280;margin-bottom:16px">Scan to open the live board on any device</div>
+      <div id="dash-qr-code" style="display:inline-block;padding:8px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px"></div>
+      <div style="font-size:.68rem;color:#9ca3af;word-break:break-all;margin-bottom:16px">${esc(dashUrl)}</div>
+      <button onclick="document.getElementById('dash-qr-modal').remove()" style="background:#f3f4f6;border:none;padding:8px 24px;border-radius:8px;font-size:.9rem;cursor:pointer;font-weight:600">Close</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  try{new QRCode($('dash-qr-code'),{text:dashUrl,width:200,height:200,correctLevel:QRCode.CorrectLevel.M});}catch(e){}
+}
+
 function calcSubmittedCount(){
   let done=0,total=0;
   Object.values(DS).forEach(b=>{if(!b||!b.chaps)return;Object.values(b.chaps).forEach(c=>{total++;if(c.submitted)done++;});});
@@ -1290,7 +1309,10 @@ function renderDashView(){
       <div class="app-brand">${esc(S.tripName||'Field Trip')}</div>
       <div class="live-badge" style="margin-top:3px"><span class="live-dot"></span> Live</div>
     </div>
-    <button class="btn-ghost btn" onclick="history.back()">← Setup</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost btn" onclick="showDashQR()" title="QR code for this dashboard">📱 QR</button>
+      <button class="btn-ghost btn" onclick="history.back()">← Setup</button>
+    </div>
   </div>
   <div class="phase-bar">
     <span class="phase-bar-lbl">Check-In Phase:</span>
