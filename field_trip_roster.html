@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Field Trip Roster</title>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#2563eb;--blue-lt:#dbeafe;--blue-dk:#1d4ed8;
+  --green:#16a34a;--green-lt:#dcfce7;
+  --red:#dc2626;--red-lt:#fee2e2;
+  --amber:#d97706;--amber-lt:#fef3c7;
+  --purple:#7c3aed;--purple-lt:#ede9fe;
+  --gray:#6b7280;--gray-lt:#f3f4f6;--gray-md:#e5e7eb;
+  --text:#111827;--muted:#6b7280;--radius:10px;
+  --teal:#0d9488;--teal-lt:#ccfbf1;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f1f5f9;color:var(--text);min-height:100vh;font-size:15px}
+
+/* ── Layout ── */
+.topbar{background:#fff;border-bottom:1px solid var(--gray-md);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.app-brand{font-size:1rem;font-weight:700;color:var(--blue);white-space:nowrap}
+.trip-name-pill{font-size:.75rem;background:var(--blue-lt);color:var(--blue);padding:3px 10px;border-radius:100px;font-weight:600}
+.page{max-width:1000px;margin:0 auto;padding:20px 16px}
+
+/* ── Tabs ── */
+.tab-bar{display:flex;background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:4px;gap:4px;margin-bottom:20px}
+.tab-btn{flex:1;padding:8px 4px;border:none;background:transparent;border-radius:7px;font-family:inherit;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.tab-btn.active{background:var(--blue);color:#fff}
+.tab-btn:not(.active):hover{background:var(--gray-lt);color:var(--text)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* ── Cards & shared ── */
+.card{background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.card-title{font-weight:700;font-size:.95rem;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.empty-state{text-align:center;padding:32px 16px;color:var(--muted);font-size:.875rem}
+h2{font-size:1.25rem;font-weight:700}
+.hint{color:var(--muted);font-size:.85rem;line-height:1.5}
+.section-hdr{font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 8px}
+
+/* ── Inputs ── */
+input[type=text],input[type=url],textarea,select{
+  width:100%;border:1px solid var(--gray-md);border-radius:8px;padding:9px 12px;
+  font-family:inherit;font-size:.9rem;outline:none;background:#fff;color:var(--text);transition:border-color .15s}
+input[type=text]:focus,input[type=url]:focus,textarea:focus,select:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:90px;line-height:1.6}
+.input-row{display:flex;gap:8px;flex-wrap:wrap}
+.input-row input,.input-row select{flex:1;min-width:140px}
+
+/* ── Buttons ── */
+button{font-family:inherit;font-weight:600;border:none;border-radius:8px;cursor:pointer;transition:opacity .15s,transform .1s;white-space:nowrap}
+button:active:not(:disabled){transform:scale(.97)}
+.btn{padding:9px 18px;font-size:.875rem}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{opacity:.88}
+.btn-ghost{background:transparent;color:var(--blue);padding:6px 10px;font-size:.875rem}.btn-ghost:hover{background:var(--blue-lt)}
+.btn-sm{background:var(--gray-lt);color:var(--text);padding:6px 12px;font-size:.8rem}.btn-sm:hover{background:var(--gray-md)}
+.btn-danger{background:var(--red-lt);color:var(--red);padding:5px 10px;font-size:.8rem}
+.btn-icon{background:none;padding:4px 7px;font-size:.95rem;color:var(--muted)}.btn-icon:hover{color:var(--red)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{opacity:.88}
+.btn-lg{padding:13px 28px;font-size:1rem;width:100%}
+
+/* ── People lists (Students & Chaperones tabs) ── */
+.people-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:620px){.people-layout{grid-template-columns:1fr}}
+.person-row{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--gray-lt);transition:background .1s}
+.person-row:last-child{border-bottom:none}
+.person-row:hover{background:var(--gray-lt)}
+.person-name{flex:1;font-size:.9rem;font-weight:500}
+.count-badge{font-size:.72rem;background:var(--gray-lt);color:var(--muted);padding:2px 7px;border-radius:100px;font-weight:600}
+
+/* ── Groups tab ── */
+.groups-layout{display:grid;grid-template-columns:1fr;gap:16px}
+.bus-block{background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);overflow:hidden}
+.bus-block-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--blue);color:#fff;gap:8px}
+.bus-block-hdr h3{color:#fff;font-size:.95rem}
+.bus-body{padding:10px 14px}
+.chap-group{border:1px solid var(--gray-md);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.chap-group-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--purple-lt);flex-wrap:wrap}
+.chap-group-name{font-weight:700;font-size:.88rem;color:var(--purple);flex:1}
+.chap-group-body{padding:8px 12px}
+.student-assign-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--gray-lt)}
+.student-assign-row:last-child{border-bottom:none}
+.sa-name{flex:1;font-size:.88rem}
+.assign-select{width:auto;flex:1;max-width:200px;padding:4px 8px;font-size:.8rem;border-radius:6px;min-width:120px}
+.unassigned-block{background:#fff;border:1px dashed var(--gray-md);border-radius:var(--radius);padding:14px}
+.unassigned-block .section-hdr{margin-top:0}
+.unassigned-pill{display:inline-flex;align-items:center;gap:6px;background:var(--gray-lt);border-radius:6px;padding:5px 10px;margin:4px;font-size:.83rem}
+.unassigned-pill select{border:none;background:transparent;font-size:.8rem;color:var(--blue);font-weight:600;padding:0;width:auto;outline:none;cursor:pointer}
+
+/* ── Share tab ── */
+.link-item{border:1px solid var(--gray-md);border-radius:8px;padding:12px;margin-top:12px}
+.link-item-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap}
+.link-url{font-size:.72rem;color:var(--muted);word-break:break-all;background:var(--gray-lt);padding:6px 8px;border-radius:6px;margin-bottom:8px}
+.qr-wrap{display:flex;justify-content:center;padding:8px 0}
+.bus-share-label{font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 6px;padding-top:4px;border-top:1px solid var(--gray-md)}
+
+/* ── Dashboard ── */
+.live-badge{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;color:var(--green);font-weight:600}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.summary-bar{display:flex;gap:20px;flex-wrap:wrap;background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:14px 20px;margin-bottom:16px}
+.stat{display:flex;flex-direction:column;align-items:center}
+.stat-num{font-size:1.6rem;font-weight:700}
+.stat-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ng{color:var(--green)}.nr{color:var(--red)}.na{color:var(--amber)}
+.dash-bus{background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+.dash-bus-hdr{padding:10px 16px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:space-between}
+.dash-bus-hdr h3{color:#fff}
+.dash-chap{border-top:1px solid var(--gray-md);padding:10px 16px}
+.dash-chap-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:4px}
+.dash-chap-name{font-weight:700;font-size:.9rem}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:.72rem;padding:3px 8px;border-radius:100px;font-weight:500}
+.chip-p{background:var(--green-lt);color:var(--green)}
+.chip-a{background:var(--red-lt);color:var(--red)}
+.chip-n{background:var(--gray-lt);color:var(--gray)}
+.chip-b{background:#dbeafe;color:#1d4ed8}
+.chip-x{background:#fef9c3;color:#a16207}
+/* Phase toggle */
+.phase-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;flex-wrap:wrap}
+.phase-bar-lbl{font-size:.78rem;font-weight:600;color:#6b7280;white-space:nowrap}
+.phase-btn{font-size:.78rem;font-weight:700;padding:5px 14px;border-radius:100px;border:2px solid transparent;cursor:pointer;transition:all .15s}
+.phase-btn.active-boarding{background:#dcfce7;color:#15803d;border-color:#16a34a}
+.phase-btn.active-endofnight{background:#dbeafe;color:#1d4ed8;border-color:#2563eb}
+.phase-btn.inactive{background:#f3f4f6;color:#9ca3af;border-color:transparent}
+/* Dual-status chip icons */
+.chip-icons{display:inline-flex;gap:2px;margin-left:4px;font-size:.65rem}
+
+/* ── Chaperone view ── */
+.chap-view-hdr{background:var(--blue);color:#fff;padding:16px 20px;text-align:center}
+.chap-view-hdr h1{font-size:1.15rem;color:#fff;margin-bottom:3px}
+.chap-view-hdr p{font-size:.82rem;opacity:.85}
+.student-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--gray-md);background:#fff;gap:12px}
+.student-row:last-child{border-bottom:none}
+.sname{font-weight:500;font-size:.95rem;flex:1}
+.sts-btns{display:flex;gap:6px;flex-shrink:0}
+.sts-btn{width:80px;height:40px;border-radius:8px;font-size:.8rem;font-weight:700;border:2px solid transparent;cursor:pointer;transition:all .15s}
+.sts-btn.p-btn{background:var(--green-lt);color:var(--green)}
+.sts-btn.p-btn.on{background:var(--green);color:#fff;border-color:var(--green)}
+.sts-btn.a-btn{background:var(--red-lt);color:var(--red)}
+.sts-btn.a-btn.on{background:var(--red);color:#fff;border-color:var(--red)}
+.chap-footer{position:sticky;bottom:0;background:#fff;border-top:2px solid var(--gray-md);padding:11px 20px;display:flex;justify-content:space-around;font-weight:700;font-size:.9rem}
+.fp{color:var(--green)}.fa{color:var(--red)}.fn{color:var(--gray)}
+
+/* ── Landing ── */
+.landing{max-width:440px;margin:60px auto;text-align:center;background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:40px 32px}
+@media(max-width:480px){.landing{margin:24px auto;padding:28px 20px}.sts-btn{width:68px}}
+
+/* ── Misc ── */
+.tag{display:inline-block;font-size:.72rem;padding:2px 7px;border-radius:100px;font-weight:600;background:var(--gray-lt);color:var(--gray)}
+.tag-blue{background:var(--blue-lt);color:var(--blue)}
+.tag-green{background:var(--green-lt);color:var(--green)}
+.tag-purple{background:var(--purple-lt);color:var(--purple)}
+.tag-teal{background:var(--teal-lt);color:var(--teal)}
+a{color:var(--blue)}
+
+/* ── Sheets import ── */
+.sheets-banner{background:var(--teal-lt);border:1px solid #5eead4;border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.sheets-banner-icon{font-size:1.5rem;flex-shrink:0;margin-top:2px}
+.sheets-banner-body{flex:1;min-width:200px}
+.sheets-banner-title{font-weight:700;font-size:.9rem;color:var(--teal);margin-bottom:4px}
+.sync-status{font-size:.78rem;font-weight:600;padding:3px 9px;border-radius:100px}
+.sync-ok{background:var(--green-lt);color:var(--green)}
+.sync-err{background:var(--red-lt);color:var(--red)}
+.sync-pending{background:var(--gray-lt);color:var(--gray)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+const uid=()=>Math.random().toString(36).slice(2,9);
+const sid=()=>Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,8);
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const $=id=>document.getElementById(id);
+const autoBase=()=>['http:','https:'].includes(location.protocol)?location.origin+location.pathname:'';
+const setRoot=html=>$('root').innerHTML=html;
+
+// ═══════════════════════════════════════════════
+// GUN
+// ═══════════════════════════════════════════════
+const gun=Gun(['https://gun-manhattan.herokuapp.com/gun','https://peer.wallie.io/gun']);
+const gdb=s=>gun.get('ftr27-'+s);
+
+// ═══════════════════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════════════════
+const P=new URLSearchParams(location.search);
+const VIEW=P.get('v'),SID=P.get('s'),BID=P.get('b'),CID=P.get('c');
+window.addEventListener('DOMContentLoaded',()=>{
+  if(VIEW==='c'&&SID&&BID&&CID) initChaperone();
+  else if(VIEW==='d'&&SID) initDashboard();
+  else initSetup();
+});
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+// Flat, independent lists + assignment maps
+let S={
+  sessionId:null, tripName:'', baseUrl:autoBase(),
+  students:{},    // id -> {name}
+  chaperones:{},  // id -> {name}
+  buses:{},       // id -> {name}
+  studentChap:{}, // studentId -> chaperoneId | ''
+  chapBus:{},     // chaperoneId -> busId | ''
+  sheetsWebAppUrl:'',   // Google Apps Script web app URL
+  sheetsLastSync:'',    // last successful sync timestamp
+};
+let activeTab='students';
+
+const loadS=()=>{try{const d=localStorage.getItem('ftr_v2');if(d){const p=JSON.parse(d);S={...S,...p};if(!S.baseUrl)S.baseUrl=autoBase();}}catch(e){}};
+const saveS=()=>localStorage.setItem('ftr_v2',JSON.stringify(S));
+
+// ═══════════════════════════════════════════════
+// COMPUTED GROUPS (flat state -> hierarchical)
+// ═══════════════════════════════════════════════
+function computeGroups(){
+  const groups={};
+  Object.entries(S.buses).forEach(([bid,b])=>{groups[bid]={name:b.name,chaps:{}};});
+  Object.entries(S.chaperones).forEach(([cid,c])=>{
+    const bid=S.chapBus[cid]||'';
+    if(bid&&groups[bid]) groups[bid].chaps[cid]={name:c.name,students:[]};
+  });
+  Object.entries(S.students).forEach(([stid,st])=>{
+    const cid=S.studentChap[stid]||'';
+    if(!cid) return;
+    const bid=S.chapBus[cid]||'';
+    if(bid&&groups[bid]&&groups[bid].chaps[cid])
+      groups[bid].chaps[cid].students.push({id:stid,name:st.name});
+  });
+  return groups;
+}
+
+function unassignedStudents(){return Object.entries(S.students).filter(([id])=>!S.studentChap[id]);}
+function unassignedChaperones(){return Object.entries(S.chaperones).filter(([id])=>!S.chapBus[id]);}
+function studentCount(cid){return Object.values(S.studentChap).filter(v=>v===cid).length;}
+
+// ═══════════════════════════════════════════════
+// SETUP SHELL
+// ═══════════════════════════════════════════════
+function initSetup(){loadS();renderShell();}
+
+function renderShell(){
+  if(!S.sessionId){renderLanding();return;}
+  const tabs=[['students','Students'],['chaperones','Chaperones'],['groups','Groups'],['share','Share']];
+  const tabBtns=tabs.map(([id,label])=>`<button class="tab-btn${activeTab===id?' active':''}" onclick="switchTab('${id}')">${label}</button>`).join('');
+
+  const syncBadge=S.sheetsLastSync
+    ?`<span class="sync-status sync-ok">✓ Synced ${S.sheetsLastSync}</span>`
+    :`<span class="sync-status sync-pending">Not connected</span>`;
+
+  const sheetsBanner=`
+    <div class="sheets-banner">
+      <div class="sheets-banner-icon">📊</div>
+      <div class="sheets-banner-body">
+        <div class="sheets-banner-title" style="margin-bottom:4px">Google Sheets Sync ${syncBadge}</div>
+        <p class="hint" style="margin-bottom:10px">Pulls students, chaperones, and buses directly from your synced Google Sheet. Click to import the latest data.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary" id="import-btn" style="background:var(--teal)" onclick="importFromSheets()">⬇ Sync from Google Sheets</button>
+          ${S.sheetsLastSync?`<span class="hint">Last synced: ${S.sheetsLastSync}</span>`:''}
+        </div>
+      </div>
+    </div>`;
+
+  setRoot(`
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="app-brand">Field Trip Roster</span>
+        <span class="trip-name-pill">${esc(S.tripName)}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-ghost btn" onclick="newTrip()">New Trip</button>
+        <button class="btn btn-green" onclick="goDash()">Live Dashboard →</button>
+      </div>
+    </div>
+    <div class="page">
+      ${sheetsBanner}
+      <div class="tab-bar">${tabBtns}</div>
+      <div id="tab-students" class="tab-panel${activeTab==='students'?' active':''}"></div>
+      <div id="tab-chaperones" class="tab-panel${activeTab==='chaperones'?' active':''}"></div>
+      <div id="tab-groups" class="tab-panel${activeTab==='groups'?' active':''}"></div>
+      <div id="tab-share" class="tab-panel${activeTab==='share'?' active':''}"></div>
+    </div>
+  `);
+  renderActiveTab();
+}
+
+function switchTab(tab){activeTab=tab;renderShell();}
+
+// ═══════════════════════════════════════════════
+// GOOGLE SHEETS IMPORT (direct CSV)
+// ═══════════════════════════════════════════════
+const SHEET_ID='1Qs0KsOIYRaGrQVY3m-TcgpOYI6xi6wItewcdHgOzNJ0';
+
+// Column indices (0-based) per tab
+// Chaperone List tab: A=col0 (unused), B=Last Name, C=First Name, D=col3, E=Email, F=Phone
+const CL={ LAST:1, FIRST:2, EMAIL:4, PHONE:5 };
+// BusesGroups tab: A=ID, B=Last, C=First, E=Ineligible, G=Paid, K=T-Shirt, M=Chaperone, O=Notes
+const BG={ ID:0, LAST:1, FIRST:2, INELIGIBLE:4, PAID:6, TSHIRT:10, CHAPERONE:12, NOTES:14 };
+
+function fetchTab(tabName){
+  return new Promise((resolve,reject)=>{
+    const cbName='_gviz_'+Math.random().toString(36).slice(2);
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{
+      delete window[cbName];
+      if(script.parentNode)script.parentNode.removeChild(script);
+      reject(new Error(
+        `Timed out loading "${tabName}".\n\n`+
+        `Make sure the sheet is published:\n`+
+        `File → Share → Publish to web → choose "Entire Document" → Publish`
+      ));
+    },20000);
+
+    window[cbName]=function(resp){
+      clearTimeout(timer);
+      delete window[cbName];
+      if(script.parentNode)script.parentNode.removeChild(script);
+      if(resp.status==='error'){
+        reject(new Error(`Sheet error in "${tabName}": ${(resp.errors||[]).map(e=>e.message).join(', ')}`));
+        return;
+      }
+      const table=resp.table||{cols:[],rows:[]};
+      const headers=table.cols.map(c=>String(c.label||c.id||''));
+      const rows=(table.rows||[]).map(row=>(row.c||[]).map(cell=>cell&&cell.v!=null?String(cell.v):''));
+      resolve([headers,...rows]);
+    };
+
+    script.onerror=()=>{
+      clearTimeout(timer);
+      delete window[cbName];
+      if(script.parentNode)script.parentNode.removeChild(script);
+      reject(new Error(`Could not load "${tabName}". Check your internet connection.`));
+    };
+    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=reqId:0;out:json;responseHandler:${cbName}&sheet=${encodeURIComponent(tabName)}`;
+    console.log('[Sheets] Loading tab:', tabName, url);
+    script.src=url;
+    document.head.appendChild(script);
+  });
+}
+
+async function importFromSheets(){
+  const btn=$('import-btn');
+  if(btn){btn.textContent='Syncing...';btn.disabled=true;}
+
+  try{
+    // Fetch tabs one at a time (each gets its own isolated callback now)
+    const chapListData   = await fetchTab('Chaperone List');
+    const stuAllData     = await fetchTab('STUDENTS ALL');
+    const groupSelData   = await fetchTab('Group Selection');
+
+    // Build T-shirt lookup from STUDENTS ALL: studentId → tshirt
+    // STUDENTS ALL columns: 0=Student ID, 1=Last, 2=First, 4=Ineligible, 6=Paid, 10=T-Shirt
+    const tshirtMap = {};
+    stuAllData.slice(1).forEach(row=>{
+      const id = String(row[BG.ID]||'').trim().replace(/\.0$/,'');
+      const ts = String(row[BG.TSHIRT]||'').trim();
+      if(id) tshirtMap[id] = ts;
+    });
+
+    // Group Selection is the authoritative student list (every row = confirmed trip student)
+    // Columns: A=Email/ID, B=Last Name, C=First Name, D=Chaperone, E=Bus (detected by header)
+    const gsHeaders   = groupSelData[0] || [];
+    const gsChapCol   = gsHeaders.findIndex(h=>{
+      const hh=String(h).toLowerCase();
+      return hh.includes('chaperone')||hh.includes('group leader')||hh.includes('supervisor');
+    });
+    const gsChapIdx = gsChapCol >= 0 ? gsChapCol : 3; // default col D
+    const gsBusCol  = gsHeaders.findIndex(h=>String(h).toLowerCase().includes('bus'));
+    const gsBusIdx  = gsBusCol  >= 0 ? gsBusCol  : 4; // default col E
+    const gsLastRaw  = gsHeaders.findIndex(h=>/last\s*name/i.test(String(h)));
+    const gsFirstRaw = gsHeaders.findIndex(h=>/first\s*name/i.test(String(h)));
+    const gsLastIdx  = gsLastRaw  >= 0 ? gsLastRaw  : 1; // default col B
+    const gsFirstIdx = gsFirstRaw >= 0 ? gsFirstRaw : 2; // default col C
+
+    // Filter to rows that have a student ID in col A
+    const gsRows = groupSelData.slice(1).filter(r=>String(r[0]||'').trim());
+
+    // Chaperone List: rows where First or Last name exists
+    const chapRows = chapListData.slice(1).filter(r=>(r[CL.FIRST]||'').trim()||(r[CL.LAST]||'').trim());
+
+    // Confirm if overwriting existing data
+    const hasExisting=Object.keys(S.students).length>0||Object.keys(S.chaperones).length>0;
+    if(hasExisting){
+      const ok=confirm(
+        `Replace current roster with data from Google Sheets?\n\n`+
+        `  ${chapRows.length} chaperones found\n`+
+        `  ${gsRows.length} students found (from Group Selection)\n\n`+
+        `This cannot be undone.`
+      );
+      if(!ok){if(btn){btn.textContent='⬇ Sync from Google Sheets';btn.disabled=false;}return;}
+    }
+
+    // Reset state
+    S.students={};S.chaperones={};S.buses={};S.studentChap={};S.chapBus={};
+    const chapKeyMap={};  // "first last" → appId
+    const stuIdMap={};    // raw student ID → appId
+
+    // ── 1. Build chaperones from "Chaperone List" tab (B=Last, C=First, E=Email, F=Phone) ──
+    chapRows.forEach(row=>{
+      const last =(row[CL.LAST] ||'').trim();
+      const first=(row[CL.FIRST]||'').trim();
+      if(!last&&!first) return;
+      const fullName=`${first} ${last}`.trim();
+      const key=fullName.toLowerCase();
+      if(chapKeyMap[key]) return; // deduplicate
+      const id=uid();
+      S.chaperones[id]={
+        name:     fullName,
+        firstName:first,
+        lastName: last,
+        email:    (row[CL.EMAIL]||'').trim(),
+        phone:    (row[CL.PHONE]||'').trim(),
+      };
+      chapKeyMap[key]=id;
+    });
+
+    // ── 2. Build students from Group Selection (all 157 confirmed trip students) ──
+    const busMap={}; // bus name → appId
+
+    gsRows.forEach(row=>{
+      const rawEmail = String(row[0]||'').trim();
+      // Extract numeric student ID — grab everything before '@' if email, otherwise use as-is
+      const rawId = (rawEmail.indexOf('@')>=0 ? rawEmail.split('@')[0] : rawEmail).replace(/\.0$/,'').trim();
+
+      const last  = String(row[gsLastIdx] ||'').trim();
+      const first = String(row[gsFirstIdx]||'').trim();
+      if(!last && !first) return;
+      const name = `${first} ${last}`.trim();
+
+      // Deduplicate by rawId
+      if(rawId && stuIdMap[rawId]) return;
+
+      const appId=uid();
+      S.students[appId]={
+        name,
+        studentId: rawId,
+        tshirt:    tshirtMap[rawId] || '',
+        notes:     '',
+      };
+      if(rawId) stuIdMap[rawId]=appId;
+
+      // Assign student → chaperone from Group Selection col D
+      const chapRaw = String(row[gsChapIdx]||'').trim();
+      const titleMatch = chapRaw.match(/^(?:Mr\.|Ms\.|Mrs\.|Dr\.)\s+([^\s(]+)/i);
+      const chapName = titleMatch ? titleMatch[1].trim() : chapRaw.replace(/\s*\(.*?\)\s*/g,'').trim();
+      let chapId = '';
+      if(chapName){
+        chapId = chapKeyMap[chapName.toLowerCase()]
+          || Object.entries(chapKeyMap).find(([k])=>k.split(' ').reverse().join(' ')===chapName.toLowerCase())?.[1]
+          || Object.entries(S.chaperones).find(([,c])=>c.lastName.toLowerCase()===chapName.toLowerCase())?.[0]
+          || '';
+        if(!chapId){
+          // Auto-create for teachers/staff not in Chaperone List
+          const parts=chapName.trim().split(/\s+/);
+          const last=parts.pop()||''; const first=parts.join(' ');
+          const newId=uid();
+          S.chaperones[newId]={name:chapName,firstName:first,lastName:last,email:'',phone:''};
+          chapKeyMap[chapName.toLowerCase()]=newId;
+          chapId=newId;
+        }
+        S.studentChap[appId]=chapId;
+      }
+
+      // Assign chaperone → bus from Group Selection col E
+      const busName = String(row[gsBusIdx]||'').trim();
+      if(busName && chapId){
+        if(!busMap[busName]){ const bid=uid();S.buses[bid]={name:busName};busMap[busName]=bid; }
+        if(!S.chapBus[chapId]) S.chapBus[chapId]=busMap[busName];
+      }
+    });
+
+    // Update sync timestamp
+    S.sheetsLastSync=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    saveS();
+
+    const stuCount=Object.keys(S.students).length;
+    const chapCount=Object.keys(S.chaperones).length;
+    const busCount=Object.keys(S.buses).length;
+
+    activeTab=chapCount>0?'groups':'students';
+    renderShell();
+    alert(
+      `✅ Sync complete!\n\n`+
+      `  ${chapCount} chaperones\n`+
+      `  ${stuCount} students\n`+
+      `  ${busCount} buses\n\n`+
+      (stuCount>0
+        ?'Students auto-assigned to chaperones. Review in the Groups tab.'
+        :'No student data found. Check that the BusesGroups tab has data.')
+    );
+
+  }catch(err){
+    alert('Sync failed:\n\n'+err.message);
+  }finally{
+    if(btn){btn.textContent='⬇ Sync from Google Sheets';btn.disabled=false;}
+  }
+}
+
+function renderActiveTab(){
+  if(activeTab==='students') renderStudentsTab();
+  else if(activeTab==='chaperones') renderChaperonesTab();
+  else if(activeTab==='groups') renderGroupsTab();
+  else if(activeTab==='share') renderShareTab();
+}
+
+function renderLanding(){
+  setRoot(`<div class="landing">
+    <div style="font-size:2.5rem;margin-bottom:12px">🚌</div>
+    <h2 style="margin-bottom:8px">Field Trip Roster</h2>
+    <p class="hint" style="margin-bottom:28px">Manage students & chaperones independently, group them flexibly, and share live check-in links.</p>
+    <input type="text" id="tname" style="margin-bottom:12px" placeholder="Trip name (e.g. Science Museum 2026)">
+    <button class="btn btn-primary btn-lg" onclick="createSession()">Create Trip</button>
+  </div>`);
+}
+
+function createSession(){
+  const name=($('tname').value||'').trim();
+  if(!name){alert('Enter a trip name.');return;}
+  S.sessionId=sid();S.tripName=name;
+  gdb(S.sessionId).get('meta').put({name,created:Date.now()});
+  saveS();renderShell();
+}
+
+function newTrip(){
+  if(!confirm('Start a new trip? This will clear all local setup data.'))return;
+  S={sessionId:null,tripName:'',baseUrl:autoBase(),students:{},chaperones:{},buses:{},studentChap:{},chapBus:{},sheetsWebAppUrl:'',sheetsLastSync:''};
+  saveS();renderShell();
+}
+
+function goDash(){
+  window.open(`${location.pathname}?v=d&s=${S.sessionId}`,'_blank');
+}
+
+// ═══════════════════════════════════════════════
+// STUDENTS TAB
+// ═══════════════════════════════════════════════
+function renderStudentsTab(){
+  const list=Object.entries(S.students);
+  const rows=list.length?list.map(([id,s])=>{
+    const cid=S.studentChap[id]||'';
+    const chapName=cid&&S.chaperones[cid]?S.chaperones[cid].name:'Unassigned';
+    const bid=cid?S.chapBus[cid]||'':'';
+    const busName=bid&&S.buses[bid]?S.buses[bid].name:'';
+    return`<div class="person-row">
+      <span class="person-name">${esc(s.name)}</span>
+      ${cid?`<span class="tag tag-purple">${esc(chapName)}</span>`:'<span class="tag">Unassigned</span>'}
+      ${busName?`<span class="tag tag-blue">${esc(busName)}</span>`:''}
+      <button class="btn-icon" onclick="removeStudent('${id}')">✕</button>
+    </div>`;
+  }).join(''):`<div class="empty-state">No students yet. Add them below.</div>`;
+
+  $('tab-students').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:16px">
+      <div>
+        <div class="card">
+          <div class="card-title">👤 All Students <span class="count-badge">${list.length}</span></div>
+          <div style="border:1px solid var(--gray-md);border-radius:8px;overflow:hidden;max-height:420px;overflow-y:auto">${rows}</div>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-title">Add Students</div>
+          <p class="hint" style="margin-bottom:10px">Add one at a time or paste a bulk list (one name per line).</p>
+          <div class="input-row" style="margin-bottom:10px">
+            <input type="text" id="new-stu" placeholder="Student name">
+            <button class="btn btn-primary" onclick="addStudent()">Add</button>
+          </div>
+          <div style="border-top:1px solid var(--gray-md);padding-top:12px;margin-top:4px">
+            <p class="hint" style="margin-bottom:8px">Bulk paste (one per line):</p>
+            <textarea id="bulk-stu" placeholder="John Doe&#10;Jane Smith&#10;Bob Johnson"></textarea>
+            <button class="btn btn-sm" style="margin-top:8px;width:100%" onclick="bulkAddStudents()">Add All</button>
+          </div>
+        </div>
+        <div class="card" style="background:var(--amber-lt);border-color:#fcd34d">
+          <p class="hint"><strong>Tip:</strong> After adding students, go to the <strong>Groups</strong> tab to assign them to chaperones.</p>
+        </div>
+      </div>
+    </div>
+  `;
+  $('new-stu').addEventListener('keydown',e=>{if(e.key==='Enter')addStudent();});
+}
+
+function addStudent(){
+  const el=$('new-stu');const name=(el.value||'').trim();if(!name)return;
+  S.students[uid()]={name};el.value='';saveS();renderStudentsTab();
+}
+
+function bulkAddStudents(){
+  const el=$('bulk-stu');
+  const names=(el.value||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  if(!names.length)return;
+  names.forEach(name=>S.students[uid()]={name});
+  el.value='';saveS();renderStudentsTab();
+}
+
+function removeStudent(id){
+  delete S.students[id];delete S.studentChap[id];saveS();renderStudentsTab();
+}
+
+// ═══════════════════════════════════════════════
+// CHAPERONES TAB
+// ═══════════════════════════════════════════════
+function renderChaperonesTab(){
+  const list=Object.entries(S.chaperones);
+  const busList=Object.entries(S.buses);
+
+  const chapRows=list.length?list.map(([id,c])=>{
+    const bid=S.chapBus[id]||'';
+    const busName=bid&&S.buses[bid]?S.buses[bid].name:'—';
+    const cnt=studentCount(id);
+    return`<tr>
+      <td style="padding:10px 12px;font-weight:600">${esc(c.firstName||'')} ${esc(c.lastName||c.name)}</td>
+      <td style="padding:10px 12px;color:var(--muted);font-size:.85rem">${esc(c.email||'—')}</td>
+      <td style="padding:10px 12px;color:var(--muted);font-size:.85rem">${esc(c.phone||'—')}</td>
+      <td style="padding:10px 12px"><span class="tag tag-blue">${esc(busName)}</span></td>
+      <td style="padding:10px 12px"><span class="count-badge">${cnt} student${cnt!==1?'s':''}</span></td>
+      <td style="padding:10px 12px;text-align:right">
+        <button class="btn-sm" onclick="editChaperone('${id}')">Edit</button>
+        <button class="btn-icon" onclick="removeChaperone('${id}')">✕</button>
+      </td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="6"><div class="empty-state">No chaperones yet.</div></td></tr>`;
+
+  const busRows=busList.length?busList.map(([id,b])=>{
+    const cnt=Object.values(S.chapBus).filter(v=>v===id).length;
+    return`<div class="person-row">
+      <span class="person-name">${esc(b.name)}</span>
+      <span class="count-badge">${cnt} chaperone${cnt!==1?'s':''}</span>
+      <button class="btn-icon" onclick="removeBus('${id}')">✕</button>
+    </div>`;
+  }).join(''):`<div class="empty-state">No buses yet.</div>`;
+
+  $('tab-chaperones').innerHTML=`
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">👥 Chaperones <span class="count-badge">${list.length}</span>
+        <span class="hint" style="margin-left:8px;font-weight:400;font-size:.78rem">Contact info is auto-filled from the <strong>Chaperone List</strong> tab (columns B–F) when you sync.</span>
+      </div>
+      <div style="border:1px solid var(--gray-md);border-radius:8px;overflow:hidden;margin-bottom:14px;overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:560px">
+          <thead>
+            <tr style="background:var(--gray-lt);font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">
+              <th style="padding:8px 12px;text-align:left;font-weight:600">Name</th>
+              <th style="padding:8px 12px;text-align:left;font-weight:600">Email</th>
+              <th style="padding:8px 12px;text-align:left;font-weight:600">Phone</th>
+              <th style="padding:8px 12px;text-align:left;font-weight:600">Bus</th>
+              <th style="padding:8px 12px;text-align:left;font-weight:600">Students</th>
+              <th style="padding:8px 12px"></th>
+            </tr>
+          </thead>
+          <tbody id="chap-tbody">${chapRows}</tbody>
+        </table>
+      </div>
+      <div style="border-top:1px solid var(--gray-md);padding-top:14px">
+        <p style="font-size:.82rem;font-weight:600;margin-bottom:8px;color:var(--text)">Add Chaperone Manually</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;flex-wrap:wrap">
+          <input type="text" id="nc-first" placeholder="First name">
+          <input type="text" id="nc-last" placeholder="Last name">
+          <input type="email" id="nc-email" placeholder="Email">
+          <input type="text" id="nc-phone" placeholder="Phone">
+          <button class="btn btn-primary" onclick="addChaperone()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;max-width:400px">
+      <div class="card">
+        <div class="card-title">🚌 Buses <span class="count-badge">${busList.length}</span></div>
+        <div style="border:1px solid var(--gray-md);border-radius:8px;overflow:hidden;margin-bottom:12px">${busRows}</div>
+        <div class="input-row">
+          <input type="text" id="new-bus" placeholder="Bus name (e.g. Bus 1)">
+          <button class="btn btn-primary" onclick="addBus()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit modal -->
+    <div id="chap-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:var(--radius);padding:24px;width:100%;max-width:440px;margin:16px">
+        <h3 style="margin-bottom:16px">Edit Chaperone</h3>
+        <div style="display:grid;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div><label class="hint">First Name</label><input type="text" id="edit-first" style="margin-top:4px"></div>
+            <div><label class="hint">Last Name</label><input type="text" id="edit-last" style="margin-top:4px"></div>
+          </div>
+          <div><label class="hint">Email</label><input type="email" id="edit-email" style="margin-top:4px"></div>
+          <div><label class="hint">Phone</label><input type="text" id="edit-phone" style="margin-top:4px"></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
+          <button class="btn btn-sm" onclick="closeEditChap()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveEditChap()">Save</button>
+        </div>
+      </div>
+    </div>
+  `;
+  $('new-bus').addEventListener('keydown',e=>{if(e.key==='Enter')addBus();});
+}
+
+let editingChapId=null;
+function editChaperone(id){
+  editingChapId=id;
+  const c=S.chaperones[id];
+  $('edit-first').value=c.firstName||'';
+  $('edit-last').value=c.lastName||c.name||'';
+  $('edit-email').value=c.email||'';
+  $('edit-phone').value=c.phone||'';
+  $('chap-modal').style.display='flex';
+}
+function closeEditChap(){$('chap-modal').style.display='none';editingChapId=null;}
+function saveEditChap(){
+  if(!editingChapId) return;
+  const first=($('edit-first').value||'').trim();
+  const last=($('edit-last').value||'').trim();
+  const name=`${first} ${last}`.trim()||S.chaperones[editingChapId].name;
+  S.chaperones[editingChapId]={...S.chaperones[editingChapId],
+    name, firstName:first, lastName:last,
+    email:($('edit-email').value||'').trim(),
+    phone:($('edit-phone').value||'').trim()
+  };
+  saveS();closeEditChap();renderChaperonesTab();
+}
+
+function addChaperone(){
+  const first=($('nc-first').value||'').trim();
+  const last=($('nc-last').value||'').trim();
+  const email=($('nc-email').value||'').trim();
+  const phone=($('nc-phone').value||'').trim();
+  const name=`${first} ${last}`.trim();
+  if(!name){alert('Enter at least a first or last name.');return;}
+  S.chaperones[uid()]={name,firstName:first,lastName:last,email,phone};
+  saveS();renderChaperonesTab();
+}
+
+function removeChaperone(id){
+  delete S.chaperones[id];delete S.chapBus[id];
+  Object.keys(S.studentChap).forEach(k=>{if(S.studentChap[k]===id)S.studentChap[k]='';});
+  saveS();renderChaperonesTab();
+}
+
+function addBus(){
+  const el=$('new-bus');const name=(el.value||'').trim();if(!name)return;
+  S.buses[uid()]={name};el.value='';saveS();renderChaperonesTab();
+}
+
+function removeBus(id){
+  delete S.buses[id];
+  Object.keys(S.chapBus).forEach(k=>{if(S.chapBus[k]===id)S.chapBus[k]='';});
+  saveS();renderChaperonesTab();
+}
+
+// ═══════════════════════════════════════════════
+// GROUPS TAB
+// ═══════════════════════════════════════════════
+function renderGroupsTab(){
+  const hasBuses=Object.keys(S.buses).length>0;
+  const hasChaps=Object.keys(S.chaperones).length>0;
+  const hasStudents=Object.keys(S.students).length>0;
+
+  if(!hasBuses||!hasChaps){
+    $('tab-groups').innerHTML=`<div class="card" style="text-align:center;padding:40px 20px">
+      <div style="font-size:2rem;margin-bottom:12px">⚙️</div>
+      <p class="hint">Add <strong>buses</strong> and <strong>chaperones</strong> in the Chaperones tab first, then come back here to arrange groups.</p>
+    </div>`;
+    return;
+  }
+
+  const groups=computeGroups();
+  const sortBuses=entries=>entries.sort(([,a],[,b])=>{
+    const n=s=>parseInt((s.name||'').replace(/\D+/g,''))||0;
+    return n(a)-n(b)||(a.name||'').localeCompare(b.name||'');
+  });
+  const chapOptions=Object.entries(S.chaperones).map(([id,c])=>`<option value="${id}">${esc(c.name)}</option>`).join('');
+  const busOptions=sortBuses(Object.entries(S.buses)).map(([id,b])=>`<option value="${id}">${esc(b.name)}</option>`).join('');
+
+  // Build assigned buses/chaps/students section
+  let busBoardHtml='';
+  sortBuses(Object.entries(groups)).forEach(([bid,bus])=>{
+    let chapsHtml='';
+    Object.entries(bus.chaps).forEach(([cid,chap])=>{
+      // Students assigned to this chaperone
+      const stuRows=chap.students.map(st=>`
+        <div class="student-assign-row">
+          <span class="sa-name">${esc(st.name)}</span>
+          <select class="assign-select" onchange="reassignStudent('${st.id}',this.value)" title="Move to chaperone">
+            <option value="">— Move to —</option>
+            ${Object.entries(S.chaperones).map(([cid2,c])=>`<option value="${cid2}"${cid2===cid?' selected':''}>${esc(c.name)}</option>`).join('')}
+            <option value="__unassign">Remove from group</option>
+          </select>
+        </div>`).join('');
+
+      chapsHtml+=`<div class="chap-group">
+        <div class="chap-group-hdr">
+          <span class="chap-group-name">${esc(chap.name)}</span>
+          <span class="count-badge">${chap.students.length} student${chap.students.length!==1?'s':''}</span>
+          <select class="assign-select" style="max-width:130px" onchange="reassignChaperone('${cid}',this.value)" title="Move chaperone to bus">
+            <option value="">— Bus —</option>
+            ${Object.entries(S.buses).map(([bid2,b])=>`<option value="${bid2}"${bid2===bid?' selected':''}>${esc(b.name)}</option>`).join('')}
+            <option value="__unassign">Remove from bus</option>
+          </select>
+        </div>
+        <div class="chap-group-body">
+          ${stuRows||'<p class="hint" style="font-size:.8rem;padding:4px 0">No students assigned yet.</p>'}
+        </div>
+      </div>`;
+    });
+
+    busBoardHtml+=`<div class="bus-block">
+      <div class="bus-block-hdr">
+        <h3>🚌 ${esc(bus.name)}</h3>
+        <span style="font-size:.8rem;opacity:.85">${Object.keys(bus.chaps).length} chaperone${Object.keys(bus.chaps).length!==1?'s':''}</span>
+      </div>
+      <div class="bus-body">
+        ${chapsHtml||'<p class="hint" style="padding:8px 0">No chaperones assigned to this bus yet.</p>'}
+      </div>
+    </div>`;
+  });
+
+  // Unassigned chaperones
+  const unChaps=unassignedChaperones();
+  const unChapHtml=unChaps.map(([cid,c])=>`
+    <span class="unassigned-pill">
+      👥 ${esc(c.name)}
+      <select class="assign-select" style="max-width:none;border:none;background:transparent;color:var(--blue);font-weight:600;padding:0;width:auto;cursor:pointer" onchange="reassignChaperone('${cid}',this.value)">
+        <option value="">Assign to bus →</option>
+        ${busOptions}
+      </select>
+    </span>`).join('');
+
+  // Unassigned students
+  const unStus=unassignedStudents();
+  const unStuHtml=unStus.map(([sid,st])=>`
+    <span class="unassigned-pill">
+      ${esc(st.name)}
+      <select class="assign-select" style="max-width:none;border:none;background:transparent;color:var(--blue);font-weight:600;padding:0;width:auto;cursor:pointer" onchange="reassignStudent('${sid}',this.value)">
+        <option value="">Assign to →</option>
+        ${chapOptions}
+      </select>
+    </span>`).join('');
+
+  $('tab-groups').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr;gap:16px">
+      ${busBoardHtml||'<div class="card"><p class="hint" style="text-align:center">Add buses in the Chaperones tab.</p></div>'}
+
+      ${(unChaps.length||unStus.length)?`<div class="unassigned-block">
+        ${unChaps.length?`<div class="section-hdr">Unassigned Chaperones</div><div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:10px">${unChapHtml}</div>`:''}
+        ${unStus.length?`<div class="section-hdr">Unassigned Students</div><div style="display:flex;flex-wrap:wrap;gap:2px">${unStuHtml}</div>`:''}
+      </div>`:''}
+    </div>
+  `;
+}
+
+function reassignStudent(sid,cid){
+  if(cid==='__unassign') S.studentChap[sid]='';
+  else if(cid) S.studentChap[sid]=cid;
+  else return;
+  saveS();renderGroupsTab();
+}
+
+function reassignChaperone(cid,bid){
+  if(bid==='__unassign') S.chapBus[cid]='';
+  else if(bid) S.chapBus[cid]=bid;
+  else return;
+  saveS();renderGroupsTab();
+}
+
+// ═══════════════════════════════════════════════
+// SHARE TAB
+// ═══════════════════════════════════════════════
+function renderShareTab(){
+  $('tab-share').innerHTML=`
+    <div class="card">
+      <div class="card-title">Share Check-In Links</div>
+      <p class="hint" style="margin-bottom:12px">
+        Upload this file to <a href="https://app.netlify.com/drop" target="_blank">Netlify Drop</a>
+        (free, drag-and-drop, instant URL) to host it online. Then paste the URL below so chaperones can open their link on their phones.
+      </p>
+      <div class="input-row" style="margin-bottom:8px">
+        <input type="url" id="base-url" placeholder="https://your-site.netlify.app/field_trip_roster.html" value="${esc(S.baseUrl)}">
+        <button class="btn btn-primary" onclick="generateLinks()">Generate Links</button>
+      </div>
+      <p class="hint">💡 The file must be on a public URL — your computer's local path won't work for chaperones.</p>
+    </div>
+    <div id="links-out"></div>
+  `;
+}
+
+function generateLinks(){
+  const base=($('base-url').value||'').trim();
+  S.baseUrl=base;saveS();
+  if(!base){alert('Please enter the hosted URL of this file.');return;}
+
+  const groups=computeGroups();
+  const busEntries=Object.entries(groups);
+  if(!busEntries.length){alert('Set up buses in the Chaperones tab first.');return;}
+
+  // Push all group data to Gun for chaperone views to read
+  busEntries.forEach(([bid,bus])=>{
+    gdb(S.sessionId).get('buses').get(bid).put({name:bus.name});
+    Object.entries(bus.chaps).forEach(([cid,chap])=>{
+      gdb(S.sessionId).get('buses').get(bid).get('chaps').get(cid).put({name:chap.name});
+      chap.students.forEach((st,i)=>{
+        gdb(S.sessionId).get('buses').get(bid).get('chaps').get(cid).get('students').get('s'+i).put({name:st.name,status:'',boardingStatus:''});
+      });
+      gdb(S.sessionId).get('buses').get(bid).get('chaps').get(cid).get('count').put(chap.students.length);
+    });
+  });
+
+  let html='';
+  const qrItems=[];
+  busEntries.forEach(([bid,bus])=>{
+    const chapEntries=Object.entries(bus.chaps);
+    if(!chapEntries.length)return;
+    html+=`<div class="bus-share-label">🚌 ${esc(bus.name)}</div>`;
+    chapEntries.forEach(([cid,chap])=>{
+      const link=`${base}?v=c&s=${S.sessionId}&b=${bid}&c=${cid}`;
+      const qid=`qr-${bid}-${cid}`;
+      html+=`<div class="link-item">
+        <div class="link-item-hdr">
+          <div>
+            <strong>${esc(chap.name)}</strong>
+            <span class="tag" style="margin-left:6px">${chap.students.length} student${chap.students.length!==1?'s':''}</span>
+          </div>
+          <button class="btn-sm" onclick="copyText('${esc(link)}',this)">Copy Link</button>
+        </div>
+        <div class="link-url">${esc(link)}</div>
+        <div class="qr-wrap" id="${qid}"></div>
+      </div>`;
+      qrItems.push({qid,link});
+    });
+  });
+
+  if(!html){alert('No grouped chaperones found. Assign chaperones to buses in the Groups tab first.');return;}
+
+  $('links-out').innerHTML=html;
+  qrItems.forEach(({qid,link})=>{
+    try{new QRCode($(qid),{text:link,width:150,height:150,correctLevel:QRCode.CorrectLevel.M});}catch(e){}
+  });
+}
+
+function copyText(text,btn){
+  navigator.clipboard.writeText(text).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy Link',2000);});
+}
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+let DS={}; // computed from local setup + Gun live updates
+let dashPhase='boarding'; // 'boarding' | 'endofnight'
+
+function initDashboard(){
+  loadS();
+  // Rebuild DS from local state
+  const groups=computeGroups();
+  DS={};
+  Object.entries(groups).forEach(([bid,bus])=>{
+    DS[bid]={name:bus.name,chaps:{}};
+    Object.entries(bus.chaps).forEach(([cid,chap])=>{
+      DS[bid].chaps[cid]={name:chap.name,students:{}};
+      chap.students.forEach((st,i)=>{DS[bid].chaps[cid].students['s'+i]={name:st.name,status:'',boardingStatus:''};});
+    });
+  });
+  renderDashView();
+  // Subscribe to phase changes
+  gdb(SID).get('phase').on(phase=>{
+    dashPhase=phase||'boarding';
+    renderDashView();
+  });
+  // Subscribe to live status updates
+  Object.entries(groups).forEach(([bid,bus])=>{
+    Object.entries(bus.chaps).forEach(([cid,chap])=>{
+      chap.students.forEach((_,i)=>{
+        gdb(SID).get('buses').get(bid).get('chaps').get(cid).get('students').get('s'+i).on(data=>{
+          if(!data||!DS[bid]||!DS[bid].chaps[cid])return;
+          DS[bid].chaps[cid].students['s'+i].status=data.status||'';
+          DS[bid].chaps[cid].students['s'+i].boardingStatus=data.boardingStatus||'';
+          refreshDashStats();
+        });
+      });
+    });
+  });
+}
+
+function setPhase(phase){
+  dashPhase=phase;
+  gdb(SID).get('phase').put(phase);
+  renderDashView();
+}
+
+function calcStats(){
+  let total=0,checked=0,missing=0,pending=0;
+  Object.values(DS).forEach(b=>{
+    if(!b||!b.chaps)return;
+    Object.values(b.chaps).forEach(c=>Object.values(c.students).forEach(s=>{
+      total++;
+      const st=dashPhase==='boarding'?(s.status||''):(s.boardingStatus||'');
+      if(st==='present'||st==='boarded')checked++;
+      else if(st==='absent'||st==='missing')missing++;
+      else pending++;
+    }));
+  });
+  return{total,checked,missing,pending};
+}
+
+function chipClass(s){
+  if(dashPhase==='boarding') return s.status==='present'?'chip-p':s.status==='absent'?'chip-a':'chip-n';
+  return s.boardingStatus==='boarded'?'chip-b':s.boardingStatus==='missing'?'chip-x':'chip-n';
+}
+function dualIcon(s){
+  const arr=s.status==='present'?'<span title="On bus" style="color:#16a34a">✓</span>':s.status==='absent'?'<span title="Not on bus" style="color:#dc2626">✗</span>':'<span style="color:#d1d5db">·</span>';
+  const eod=s.boardingStatus==='boarded'?'<span title="End of night ✓" style="color:#1d4ed8">🌙</span>':s.boardingStatus==='missing'?'<span title="End of night missing" style="color:#a16207">⚠</span>':'<span style="color:#d1d5db">·</span>';
+  return`<span class="chip-icons">${arr}${eod}</span>`;
+}
+
+function renderDashView(){
+  const {total,checked,missing,pending}=calcStats();
+  const isBoarding=dashPhase==='boarding';
+  const checkedLbl=isBoarding?'On Bus':'On Bus';
+  const missingLbl=isBoarding?'Absent':'Missing';
+
+  const busHtml=Object.entries(DS).filter(([,b])=>b&&b.chaps).sort(([,a],[,b])=>{
+    const n=s=>parseInt((s.name||'').replace(/\D+/g,''))||0;
+    return n(a)-n(b)||(a.name||'').localeCompare(b.name||'');
+  }).map(([bid,bus])=>{
+    const chapHtml=Object.entries(bus.chaps).map(([cid,chap])=>{
+      const stus=Object.entries(chap.students);
+      const p=stus.filter(([,s])=>isBoarding?(s.status==='present'):(s.boardingStatus==='boarded')).length;
+      const a=stus.filter(([,s])=>isBoarding?(s.status==='absent'):(s.boardingStatus==='missing')).length;
+      const n=stus.length-p-a;
+      const chips=stus.map(([,s])=>`<span class="chip ${chipClass(s)}">${esc(s.name)}${dualIcon(s)}</span>`).join('');
+      return`<div class="dash-chap">
+        <div class="dash-chap-hdr">
+          <span class="dash-chap-name">${esc(chap.name)}</span>
+          <span id="cc-${cid}" style="display:flex;gap:4px;flex-wrap:wrap">
+            <span style="font-size:.72rem;background:${isBoarding?'#dcfce7':'#dbeafe'};color:${isBoarding?'#16a34a':'#1d4ed8'};padding:2px 7px;border-radius:4px;font-weight:600">${p} ${checkedLbl.toLowerCase()}</span>
+            ${a?`<span style="font-size:.72rem;background:${isBoarding?'#fee2e2':'#fef9c3'};color:${isBoarding?'#dc2626':'#a16207'};padding:2px 7px;border-radius:4px;font-weight:600">${a} ${missingLbl.toLowerCase()}</span>`:''}
+            ${n?`<span style="font-size:.72rem;background:#f3f4f6;color:#6b7280;padding:2px 7px;border-radius:4px;font-weight:600">${n} pending</span>`:''}
+          </span>
+        </div>
+        <div class="chips" id="sc-${cid}">${chips}</div>
+      </div>`;
+    }).join('');
+    return`<div class="dash-bus">
+      <div class="dash-bus-hdr"><h3>${esc(bus.name)}</h3></div>
+      <div>${chapHtml}</div>
+    </div>`;
+  }).join('');
+
+  setRoot(`<div class="topbar">
+    <div>
+      <div class="app-brand">${esc(S.tripName||'Field Trip')}</div>
+      <div class="live-badge" style="margin-top:3px"><span class="live-dot"></span> Live</div>
+    </div>
+    <button class="btn-ghost btn" onclick="history.back()">← Setup</button>
+  </div>
+  <div class="phase-bar">
+    <span class="phase-bar-lbl">Check-In Phase:</span>
+    <button class="phase-btn ${isBoarding?'active-boarding':'inactive'}" onclick="setPhase('boarding')">🚌 Boarding</button>
+    <button class="phase-btn ${!isBoarding?'active-endofnight':'inactive'}" onclick="setPhase('endofnight')">🌙 End of Night</button>
+  </div>
+  <div class="page">
+    <div class="summary-bar">
+      <div class="stat"><span class="stat-num">${total}</span><span class="stat-lbl">Total</span></div>
+      <div class="stat"><span class="stat-num ng" id="sp">${checked}</span><span class="stat-lbl">${checkedLbl}</span></div>
+      <div class="stat"><span class="stat-num nr" id="sa">${missing}</span><span class="stat-lbl">${missingLbl}</span></div>
+      <div class="stat"><span class="stat-num na" id="sn">${pending}</span><span class="stat-lbl">Pending</span></div>
+    </div>
+    ${busHtml||'<p class="hint" style="text-align:center;padding:32px">No groups found. Return to setup.</p>'}
+  </div>`);
+}
+
+function refreshDashStats(){
+  const {checked,missing,pending}=calcStats();
+  const isBoarding=dashPhase==='boarding';
+  const checkedLbl=isBoarding?'on bus':'on bus';
+  const missingLbl=isBoarding?'absent':'missing';
+  if($('sp')){$('sp').textContent=checked;$('sa').textContent=missing;$('sn').textContent=pending;}
+  Object.entries(DS).forEach(([,bus])=>{
+    if(!bus||!bus.chaps)return;
+    Object.entries(bus.chaps).forEach(([cid,chap])=>{
+      const stus=Object.entries(chap.students);
+      const p=stus.filter(([,s])=>isBoarding?(s.status==='present'):(s.boardingStatus==='boarded')).length;
+      const a=stus.filter(([,s])=>isBoarding?(s.status==='absent'):(s.boardingStatus==='missing')).length;
+      const n=stus.length-p-a;
+      const cc=$('cc-'+cid);
+      if(cc)cc.innerHTML=`
+        <span style="font-size:.72rem;background:${isBoarding?'#dcfce7':'#dbeafe'};color:${isBoarding?'#16a34a':'#1d4ed8'};padding:2px 7px;border-radius:4px;font-weight:600">${p} ${checkedLbl}</span>
+        ${a?`<span style="font-size:.72rem;background:${isBoarding?'#fee2e2':'#fef9c3'};color:${isBoarding?'#dc2626':'#a16207'};padding:2px 7px;border-radius:4px;font-weight:600">${a} ${missingLbl}</span>`:''}
+        ${n?`<span style="font-size:.72rem;background:#f3f4f6;color:#6b7280;padding:2px 7px;border-radius:4px;font-weight:600">${n} pending</span>`:''}`;
+      const sc=$('sc-'+cid);
+      if(sc)sc.innerHTML=stus.map(([,s])=>`<span class="chip ${chipClass(s)}">${esc(s.name)}${dualIcon(s)}</span>`).join('');
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════
+// CHAPERONE VIEW
+// ═══════════════════════════════════════════════
+let CV={busName:'',chapName:'',students:{}};
+let chapPhase='boarding'; // synced from GUN: 'boarding' | 'endofnight'
+
+function initChaperone(){
+  setRoot('<div style="text-align:center;padding:60px;color:#6b7280">Loading roster...</div>');
+  const ref=gdb(SID).get('buses').get(BID).get('chaps').get(CID);
+  gdb(SID).get('buses').get(BID).once(d=>{if(d&&d.name)CV.busName=d.name;});
+  ref.once(d=>{if(d&&d.name)CV.chapName=d.name;});
+  // Listen for phase changes from teacher's device
+  gdb(SID).get('phase').on(phase=>{
+    chapPhase=phase||'boarding';
+    renderChapView();
+  });
+  ref.get('students').map().on((data,sId)=>{
+    if(!data||!sId||sId==='_'||typeof data!=='object'||!data.name)return;
+    if(!CV.students[sId])CV.students[sId]={};
+    CV.students[sId].name=data.name;
+    CV.students[sId].status=data.status||'';
+    CV.students[sId].boardingStatus=data.boardingStatus||'';
+    renderChapView();
+  });
+  setTimeout(()=>{if(!Object.keys(CV.students).length)renderChapView();},4000);
+}
+
+function setStatus(sId,value){
+  const field=chapPhase==='boarding'?'status':'boardingStatus';
+  const cur=CV.students[sId]?.[field];
+  const next=cur===value?'':value;
+  CV.students[sId][field]=next;
+  gdb(SID).get('buses').get(BID).get('chaps').get(CID).get('students').get(sId).get(field).put(next);
+  renderChapView();
+}
+
+function renderChapView(){
+  const sorted=Object.entries(CV.students).sort(([a],[b])=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+  const isBoarding=chapPhase==='boarding';
+
+  const checked=sorted.filter(([,s])=>isBoarding?s.status==='present':s.boardingStatus==='boarded').length;
+  const missing=sorted.filter(([,s])=>isBoarding?s.status==='absent':s.boardingStatus==='missing').length;
+  const pending=sorted.length-checked-missing;
+
+  const phaseLabel=isBoarding?'Boarding':'End of Night';
+  const phaseColor=isBoarding?'var(--blue)':'#1d4ed8';
+  const yesLabel=isBoarding?'On Bus':'On Bus';
+  const noLabel=isBoarding?'Absent':'Missing';
+  const yesVal=isBoarding?'present':'boarded';
+  const noVal=isBoarding?'absent':'missing';
+
+  const rows=sorted.map(([sId,s])=>{
+    const curVal=isBoarding?(s.status||''):(s.boardingStatus||'');
+    // During End of Night, show boarding status as a small indicator
+    const priorIcon=isBoarding?'':(s.status==='present'?' <span style="font-size:.7rem;color:#16a34a">✓boarded</span>':s.status==='absent'?' <span style="font-size:.7rem;color:#dc2626">✗absent</span>':'');
+    return`<div class="student-row">
+      <span class="sname">${esc(s.name)}${priorIcon}</span>
+      <div class="sts-btns">
+        <button class="sts-btn p-btn${curVal===yesVal?' on':''}" onclick="setStatus('${sId}','${yesVal}')">${yesLabel}</button>
+        <button class="sts-btn a-btn${curVal===noVal?' on':''}" onclick="setStatus('${sId}','${noVal}')">${noLabel}</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  setRoot(`<div style="min-height:100vh;display:flex;flex-direction:column">
+    <div class="chap-view-hdr" style="background:${phaseColor}">
+      <h1>${esc(CV.busName||'Bus')} — ${esc(CV.chapName||'Chaperone')}</h1>
+      <p>${phaseLabel} · Tap to mark each student</p>
+    </div>
+    <div style="flex:1">
+      ${rows||'<p style="padding:32px;text-align:center;color:#6b7280">No students loaded.<br>Check your connection and refresh.</p>'}
+    </div>
+    <div class="chap-footer">
+      <span class="fp">✓ ${checked} On Bus</span>
+      <span class="fa">✕ ${missing} ${isBoarding?'Absent':'Missing'}</span>
+      <span class="fn">○ ${pending} Pending</span>
+    </div>
+  </div>`);
+}
+</script>
+</body>
+</html>
