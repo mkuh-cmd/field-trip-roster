@@ -876,15 +876,17 @@ function reassignChaperone(cid,bid){
 // SHARE TAB
 // ═══════════════════════════════════════════════
 function renderShareTab(){
+  // Auto-detect URL from current page (works when hosted on GitHub Pages)
+  const autoUrl = (location.protocol==='file:') ? '' : location.href.split('?')[0];
+  const baseVal = S.baseUrl || autoUrl;
   $('tab-share').innerHTML=`
     <div class="card">
       <div class="card-title">Share Check-In Links</div>
       <p class="hint" style="margin-bottom:12px">
-        Upload this file to <a href="https://app.netlify.com/drop" target="_blank">Netlify Drop</a>
-        (free, drag-and-drop, instant URL) to host it online. Then paste the URL below so chaperones can open their link on their phones.
+        The URL below was auto-detected from where this page is hosted. If it looks correct, just click <strong>Generate Links</strong>. If not, paste the correct public URL for this file.
       </p>
       <div class="input-row" style="margin-bottom:8px">
-        <input type="url" id="base-url" placeholder="https://your-site.netlify.app/field_trip_roster.html" value="${esc(S.baseUrl)}">
+        <input type="url" id="base-url" placeholder="https://mkuh-cmd.github.io/field-trip-roster/field_trip_roster.html" value="${esc(baseVal)}">
         <button class="btn btn-primary" onclick="generateLinks()">Generate Links</button>
       </div>
       <p class="hint">💡 The file must be on a public URL — your computer's local path won't work for chaperones.</p>
