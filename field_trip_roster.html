@@ -1310,7 +1310,10 @@ function submitCheckIn(){
       <div style="font-size:1.1rem;font-weight:700;color:#dc2626;padding:4px 0">✕ ${absent} ${esc(absentLabel)}</div>
       ${pending?`<div style="font-size:1.1rem;font-weight:700;color:#9ca3af;padding:4px 0">○ ${pending} Pending</div>`:''}
     </div>
-    <button class="btn" onclick="if(fbReady())fbTrip(SID,'buses',BID,'chaps',CID,'submitted').set(false);renderChapView()" style="background:#f3f4f6;color:#374151;border:none;padding:10px 24px">← Edit Check-In</button>
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px">
+      <button class="btn btn-primary" onclick="renderChapView()" style="padding:12px;font-size:1rem">Continue →</button>
+      <button class="btn" onclick="if(fbReady())fbTrip(SID,'buses',BID,'chaps',CID,'submitted').set(false);renderChapView()" style="background:#f3f4f6;color:#374151;border:none;padding:10px 24px">← Edit Check-In</button>
+    </div>
   </div>`);
 }
 </script>
