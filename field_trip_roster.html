@@ -587,24 +587,19 @@ function goDash(){
 function saveFbConfig(){
   let raw=($('fb-cfg-input').value||'').trim();
   if(!raw){alert('Please paste your Firebase config.');return;}
-  // Strip "const firebaseConfig = " wrapper if present
-  raw=raw.replace(/^[\s\S]*?const\s+firebaseConfig\s*=\s*/,'').replace(/;?\s*$/,'').trim();
-  // Extract just the {...} object if extra code surrounds it
-  const braceStart=raw.indexOf('{'), braceEnd=raw.lastIndexOf('}');
-  if(braceStart>=0&&braceEnd>braceStart) raw=raw.slice(braceStart,braceEnd+1);
-  // Convert JS object literal to valid JSON (quote unquoted keys)
-  let jsonStr=raw
-    .replace(/\/\/.*$/gm,'')          // strip // comments
-    .replace(/,(\s*[}\]])/g,'$1')     // trailing commas
-    .replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)(\s*:)/g,'$1"$2"$3'); // quote keys
+  // Extract just the { ... } block
+  const s=raw.indexOf('{'),e=raw.lastIndexOf('}');
+  if(s<0||e<=s){alert('Could not find a { } block. Paste the firebaseConfig object from Firebase.');return;}
+  const block=raw.slice(s,e+1);
   try{
-    const cfg=JSON.parse(jsonStr);
-    if(!cfg.databaseURL){alert('Config is missing "databaseURL".\n\nMake sure you:\n1. Created a Realtime Database (not Firestore)\n2. Copied the full firebaseConfig object from Project Settings → Your apps');return;}
+    // Evaluate as JS object literal (handles both quoted and unquoted keys)
+    const cfg=new Function('return ('+block+')')();
+    if(!cfg||!cfg.databaseURL){alert('Config is missing "databaseURL".\n\nMake sure you created a Realtime Database in Firebase (Build → Realtime Database) and copied the full config.');return;}
     localStorage.setItem('ftr_fb',JSON.stringify(cfg));
     if(fbInit(cfg)){alert('✅ Firebase connected! Live sync is now active.');renderShell();}
     else{alert('❌ Firebase connection failed. Check the config and try again.');}
-  }catch(e){alert('Could not read config. Try copying just the { ... } block from the Firebase console.');}
-}
+  }catch(e){alert('Error reading config: '+e.message+'\n\nTry pasting just the { ... } block.');}}
+
 
 // ═══════════════════════════════════════════════
 // STUDENTS TAB
