@@ -188,6 +188,16 @@ const setRoot=html=>$('root').innerHTML=html;
 // ═══════════════════════════════════════════════
 // FIREBASE SYNC
 // ═══════════════════════════════════════════════
+// Config baked in — works on every device (teacher + chaperone phones)
+const FB_CONFIG={
+  apiKey:"AIzaSyAHJXhuKk_sYNDRQ8-OC1Aw7l90wAaW7Sg",
+  authDomain:"field-trip-attendance.firebaseapp.com",
+  databaseURL:"https://field-trip-attendance-default-rtdb.firebaseio.com",
+  projectId:"field-trip-attendance",
+  storageBucket:"field-trip-attendance.firebasestorage.app",
+  messagingSenderId:"167205267344",
+  appId:"1:167205267344:web:8920fa000dbb544e21b515"
+};
 let _fbDb=null;
 function fbReady(){return!!_fbDb;}
 function fbr(...parts){return _fbDb?_fbDb.ref(parts.join('/')):null;}
@@ -202,6 +212,8 @@ function fbInit(cfg){
   }catch(e){console.error('Firebase init failed:',e);return false;}
 }
 function fbLoad(){
+  // First try baked-in config, then fall back to localStorage
+  if(FB_CONFIG.databaseURL){fbInit(FB_CONFIG);return;}
   try{const c=JSON.parse(localStorage.getItem('ftr_fb')||'null');if(c)fbInit(c);}catch(e){}
 }
 fbLoad();
@@ -1061,6 +1073,26 @@ function initDashboard(){
   setInterval(updatePollLabel,3000);
 }
 
+function forceRefresh(){
+  if(!fbReady())return;
+  const groups=computeGroups();
+  Object.entries(groups).forEach(([bid,bus])=>{
+    Object.entries(bus.chaps).forEach(([cid])=>{
+      fbTrip(SID,'buses',bid,'chaps',cid,'students').once('value',snap=>{
+        const data=snap.val()||{};
+        Object.entries(data).forEach(([sId,st])=>{
+          if(!DS[bid]?.chaps[cid]?.students[sId])return;
+          DS[bid].chaps[cid].students[sId].status=st.status||'';
+          DS[bid].chaps[cid].students[sId].boardingStatus=st.boardingStatus||'';
+        });
+        refreshDashStats();
+      });
+    });
+  });
+  lastDashPoll=Date.now();
+  updatePollLabel();
+}
+
 function updatePollLabel(){
   const el=$('poll-lbl');
   if(!el)return;
@@ -1161,7 +1193,7 @@ function renderDashView(){
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 6px;font-size:.7rem;color:#9ca3af">
       <span id="sub-count">${calcSubmittedCount()}</span>
-      <span>🔄 Updated: <span id="poll-lbl">just now</span> · <button onclick="pollGUN()" style="background:none;border:none;color:#6b7280;font-size:.7rem;cursor:pointer;text-decoration:underline;padding:0">Refresh now</button></span>
+      <span>🔄 Updated: <span id="poll-lbl">just now</span> · <button onclick="forceRefresh()" style="background:none;border:none;color:#6b7280;font-size:.7rem;cursor:pointer;text-decoration:underline;padding:0">Refresh now</button></span>
     </div>
     ${busHtml||'<p class="hint" style="text-align:center;padding:32px">No groups found. Return to setup.</p>'}
   </div>`);
