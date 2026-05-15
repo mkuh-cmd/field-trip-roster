@@ -960,16 +960,16 @@ function copyText(text,btn){
 // ═══════════════════════════════════════════════
 let DS={}; // computed from local setup + Gun live updates
 let dashPhase='boarding'; // 'boarding' | 'endofnight'
+let lastDashPoll=Date.now();
 
 function initDashboard(){
   loadS();
-  // Rebuild DS from local state
   const groups=computeGroups();
   DS={};
   Object.entries(groups).forEach(([bid,bus])=>{
     DS[bid]={name:bus.name,chaps:{}};
     Object.entries(bus.chaps).forEach(([cid,chap])=>{
-      DS[bid].chaps[cid]={name:chap.name,students:{}};
+      DS[bid].chaps[cid]={name:chap.name,submitted:false,students:{}};
       chap.students.forEach((st,i)=>{DS[bid].chaps[cid].students['s'+i]={name:st.name,status:'',boardingStatus:''};});
     });
   });
@@ -979,7 +979,7 @@ function initDashboard(){
     dashPhase=phase||'boarding';
     renderDashView();
   });
-  // Subscribe to live status updates
+  // Subscribe to live status + submitted updates
   Object.entries(groups).forEach(([bid,bus])=>{
     Object.entries(bus.chaps).forEach(([cid,chap])=>{
       chap.students.forEach((_,i)=>{
@@ -990,14 +990,57 @@ function initDashboard(){
           refreshDashStats();
         });
       });
+      gdb(SID).get('buses').get(bid).get('chaps').get(cid).get('submitted').on(val=>{
+        if(!DS[bid]||!DS[bid].chaps[cid])return;
+        DS[bid].chaps[cid].submitted=val||false;
+        refreshDashStats();
+      });
     });
   });
+  // Poll GUN every 10 seconds as a fallback refresh
+  pollGUN();
+  setInterval(pollGUN,10000);
+  setInterval(updatePollLabel,3000);
+}
+
+function pollGUN(){
+  const groups=computeGroups();
+  Object.entries(groups).forEach(([bid,bus])=>{
+    Object.entries(bus.chaps).forEach(([cid,chap])=>{
+      chap.students.forEach((_,i)=>{
+        gdb(SID).get('buses').get(bid).get('chaps').get(cid).get('students').get('s'+i).once(data=>{
+          if(!data||!DS[bid]||!DS[bid].chaps[cid])return;
+          DS[bid].chaps[cid].students['s'+i].status=data.status||'';
+          DS[bid].chaps[cid].students['s'+i].boardingStatus=data.boardingStatus||'';
+        });
+      });
+      gdb(SID).get('buses').get(bid).get('chaps').get(cid).get('submitted').once(val=>{
+        if(!DS[bid]||!DS[bid].chaps[cid])return;
+        DS[bid].chaps[cid].submitted=val||false;
+      });
+    });
+  });
+  lastDashPoll=Date.now();
+  setTimeout(()=>{refreshDashStats();updatePollLabel();},800);
+}
+
+function updatePollLabel(){
+  const el=$('poll-lbl');
+  if(!el)return;
+  const sec=Math.round((Date.now()-lastDashPoll)/1000);
+  el.textContent=sec<5?'just now':sec+'s ago';
 }
 
 function setPhase(phase){
   dashPhase=phase;
   gdb(SID).get('phase').put(phase);
   renderDashView();
+}
+
+function calcSubmittedCount(){
+  let done=0,total=0;
+  Object.values(DS).forEach(b=>{if(!b||!b.chaps)return;Object.values(b.chaps).forEach(c=>{total++;if(c.submitted)done++;});});
+  return total?`${done}/${total} chaperones submitted`:'';
 }
 
 function calcStats(){
@@ -1041,9 +1084,10 @@ function renderDashView(){
       const a=stus.filter(([,s])=>isBoarding?(s.status==='absent'):(s.boardingStatus==='missing')).length;
       const n=stus.length-p-a;
       const chips=stus.map(([,s])=>`<span class="chip ${chipClass(s)}">${esc(s.name)}${dualIcon(s)}</span>`).join('');
+      const subBadge=chap.submitted?'<span style="font-size:.7rem;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:100px;font-weight:700;border:1px solid #86efac">✓ submitted</span>':'';
       return`<div class="dash-chap">
         <div class="dash-chap-hdr">
-          <span class="dash-chap-name">${esc(chap.name)}</span>
+          <span class="dash-chap-name" id="cn-${cid}">${esc(chap.name)} ${subBadge}</span>
           <span id="cc-${cid}" style="display:flex;gap:4px;flex-wrap:wrap">
             <span style="font-size:.72rem;background:${isBoarding?'#dcfce7':'#dbeafe'};color:${isBoarding?'#16a34a':'#1d4ed8'};padding:2px 7px;border-radius:4px;font-weight:600">${p} ${checkedLbl.toLowerCase()}</span>
             ${a?`<span style="font-size:.72rem;background:${isBoarding?'#fee2e2':'#fef9c3'};color:${isBoarding?'#dc2626':'#a16207'};padding:2px 7px;border-radius:4px;font-weight:600">${a} ${missingLbl.toLowerCase()}</span>`:''}
@@ -1078,6 +1122,10 @@ function renderDashView(){
       <div class="stat"><span class="stat-num nr" id="sa">${missing}</span><span class="stat-lbl">${missingLbl}</span></div>
       <div class="stat"><span class="stat-num na" id="sn">${pending}</span><span class="stat-lbl">Pending</span></div>
     </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 6px;font-size:.7rem;color:#9ca3af">
+      <span id="sub-count">${calcSubmittedCount()}</span>
+      <span>🔄 Updated: <span id="poll-lbl">just now</span> · <button onclick="pollGUN()" style="background:none;border:none;color:#6b7280;font-size:.7rem;cursor:pointer;text-decoration:underline;padding:0">Refresh now</button></span>
+    </div>
     ${busHtml||'<p class="hint" style="text-align:center;padding:32px">No groups found. Return to setup.</p>'}
   </div>`);
 }
@@ -1088,6 +1136,7 @@ function refreshDashStats(){
   const checkedLbl=isBoarding?'on bus':'on bus';
   const missingLbl=isBoarding?'absent':'missing';
   if($('sp')){$('sp').textContent=checked;$('sa').textContent=missing;$('sn').textContent=pending;}
+  const sc2=$('sub-count'); if(sc2)sc2.textContent=calcSubmittedCount();
   Object.entries(DS).forEach(([,bus])=>{
     if(!bus||!bus.chaps)return;
     Object.entries(bus.chaps).forEach(([cid,chap])=>{
@@ -1100,6 +1149,8 @@ function refreshDashStats(){
         <span style="font-size:.72rem;background:${isBoarding?'#dcfce7':'#dbeafe'};color:${isBoarding?'#16a34a':'#1d4ed8'};padding:2px 7px;border-radius:4px;font-weight:600">${p} ${checkedLbl}</span>
         ${a?`<span style="font-size:.72rem;background:${isBoarding?'#fee2e2':'#fef9c3'};color:${isBoarding?'#dc2626':'#a16207'};padding:2px 7px;border-radius:4px;font-weight:600">${a} ${missingLbl}</span>`:''}
         ${n?`<span style="font-size:.72rem;background:#f3f4f6;color:#6b7280;padding:2px 7px;border-radius:4px;font-weight:600">${n} pending</span>`:''}`;
+      const subBadge=chap.submitted?'<span style="font-size:.7rem;background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:100px;font-weight:700;border:1px solid #86efac">✓ submitted</span>':'';
+      const cn=$('cn-'+cid); if(cn)cn.innerHTML=esc(chap.name)+' '+subBadge;
       const sc=$('sc-'+cid);
       if(sc)sc.innerHTML=stus.map(([,s])=>`<span class="chip ${chipClass(s)}">${esc(s.name)}${dualIcon(s)}</span>`).join('');
     });
@@ -1191,9 +1242,12 @@ function renderChapView(){
       ${rows||'<p style="padding:32px;text-align:center;color:#6b7280">No students loaded.<br>Check your connection and refresh.</p>'}
     </div>
     <div class="chap-footer">
-      <span class="fp">✓ ${checked} ${isBoarding?'On Bus':'On Bus'}</span>
+      <span class="fp">✓ ${checked} On Bus</span>
       <span class="fa">✕ ${missing} ${isBoarding?'Absent':'Missing'}</span>
       <span class="fn">○ ${pending} Pending</span>
+    </div>
+    <div style="padding:12px 16px 20px;background:#fff;border-top:1px solid #e5e7eb">
+      <button class="btn btn-primary" style="width:100%;font-size:1rem;padding:12px" onclick="submitCheckIn()">✅ Submit Check-In</button>
     </div>
   </div>`);
 }
@@ -1201,6 +1255,30 @@ function renderChapView(){
 function setChapPhase(phase){
   chapPhase=phase;
   renderChapView();
+}
+
+function submitCheckIn(){
+  const sorted=Object.entries(CV.students);
+  const isBoarding=chapPhase==='boarding';
+  const checked=sorted.filter(([,s])=>isBoarding?s.status==='present':s.boardingStatus==='boarded').length;
+  const absent=sorted.filter(([,s])=>isBoarding?s.status==='absent':s.boardingStatus==='missing').length;
+  const pending=sorted.length-checked-absent;
+  const phaseLabel=isBoarding?'Boarding':'End of Night';
+  const absentLabel=isBoarding?'Absent':'Missing';
+  const msg=`Submit ${phaseLabel} check-in?\n\n✓ ${checked} On Bus\n✕ ${absent} ${absentLabel}\n○ ${pending} Pending${pending>0?'\n\n⚠️ '+pending+' student(s) not yet marked.':'\n\n✅ All students marked!'}`;
+  if(!confirm(msg))return;
+  gdb(SID).get('buses').get(BID).get('chaps').get(CID).get('submitted').put(true);
+  setRoot(`<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;background:#f9fafb">
+    <div style="font-size:3.5rem;margin-bottom:12px">✅</div>
+    <h2 style="font-size:1.4rem;font-weight:800;color:#15803d;margin-bottom:6px">Check-In Submitted!</h2>
+    <p style="color:#6b7280;margin-bottom:20px;font-size:.9rem">${esc(phaseLabel)} · ${esc(CV.busName)} — ${esc(CV.chapName)}</p>
+    <div style="background:#fff;border:1px solid #d1fae5;border-radius:12px;padding:16px 28px;margin-bottom:24px;min-width:200px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+      <div style="font-size:1.1rem;font-weight:700;color:#16a34a;padding:4px 0">✓ ${checked} On Bus</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#dc2626;padding:4px 0">✕ ${absent} ${esc(absentLabel)}</div>
+      ${pending?`<div style="font-size:1.1rem;font-weight:700;color:#9ca3af;padding:4px 0">○ ${pending} Pending</div>`:''}
+    </div>
+    <button class="btn" onclick="gdb(SID).get('buses').get(BID).get('chaps').get(CID).get('submitted').put(false);renderChapView()" style="background:#f3f4f6;color:#374151;border:none;padding:10px 24px">← Edit Check-In</button>
+  </div>`);
 }
 </script>
 </body>
