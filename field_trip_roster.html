@@ -585,15 +585,25 @@ function goDash(){
 }
 
 function saveFbConfig(){
-  const raw=($('fb-cfg-input').value||'').trim();
-  if(!raw){alert('Please paste your Firebase config JSON.');return;}
+  let raw=($('fb-cfg-input').value||'').trim();
+  if(!raw){alert('Please paste your Firebase config.');return;}
+  // Strip "const firebaseConfig = " wrapper if present
+  raw=raw.replace(/^[\s\S]*?const\s+firebaseConfig\s*=\s*/,'').replace(/;?\s*$/,'').trim();
+  // Extract just the {...} object if extra code surrounds it
+  const braceStart=raw.indexOf('{'), braceEnd=raw.lastIndexOf('}');
+  if(braceStart>=0&&braceEnd>braceStart) raw=raw.slice(braceStart,braceEnd+1);
+  // Convert JS object literal to valid JSON (quote unquoted keys)
+  let jsonStr=raw
+    .replace(/\/\/.*$/gm,'')          // strip // comments
+    .replace(/,(\s*[}\]])/g,'$1')     // trailing commas
+    .replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)(\s*:)/g,'$1"$2"$3'); // quote keys
   try{
-    const cfg=JSON.parse(raw);
-    if(!cfg.databaseURL){alert('Config is missing "databaseURL". Make sure you enabled Realtime Database in your Firebase project and copied the full config.');return;}
+    const cfg=JSON.parse(jsonStr);
+    if(!cfg.databaseURL){alert('Config is missing "databaseURL".\n\nMake sure you:\n1. Created a Realtime Database (not Firestore)\n2. Copied the full firebaseConfig object from Project Settings → Your apps');return;}
     localStorage.setItem('ftr_fb',JSON.stringify(cfg));
     if(fbInit(cfg)){alert('✅ Firebase connected! Live sync is now active.');renderShell();}
     else{alert('❌ Firebase connection failed. Check the config and try again.');}
-  }catch(e){alert('Invalid JSON. Please paste the full firebaseConfig object.');}
+  }catch(e){alert('Could not read config. Try copying just the { ... } block from the Firebase console.');}
 }
 
 // ═══════════════════════════════════════════════
