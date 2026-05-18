@@ -594,7 +594,6 @@ function createSession(){
   const name=($('tname').value||'').trim();
   if(!name){alert('Enter a trip name.');return;}
   S.sessionId=sid();S.tripName=name;
-  gdb(S.sessionId).get('meta').put({name,created:Date.now()});
   saveS();renderShell();
 }
 
