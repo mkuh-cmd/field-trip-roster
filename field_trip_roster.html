@@ -3,17 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Field Trip Roster</title>
+<title>Field Trip Manager — The Calculated Classroom</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --blue:#2563eb;--blue-lt:#dbeafe;--blue-dk:#1d4ed8;
+  /* ── Calculated Classroom brand palette ── */
+  --blue:#1e3a5f;--blue-lt:#e8edf5;--blue-dk:#12263f;
+  --amber:#c47f0a;--amber-lt:#fef3c7;--amber-bright:#f59e0b;
   --green:#16a34a;--green-lt:#dcfce7;
   --red:#dc2626;--red-lt:#fee2e2;
-  --amber:#d97706;--amber-lt:#fef3c7;
   --purple:#7c3aed;--purple-lt:#ede9fe;
   --gray:#6b7280;--gray-lt:#f3f4f6;--gray-md:#e5e7eb;
   --text:#111827;--muted:#6b7280;--radius:10px;
@@ -22,9 +23,15 @@
 body{font-family:'Segoe UI',system-ui,sans-serif;background:#f1f5f9;color:var(--text);min-height:100vh;font-size:15px}
 
 /* ── Layout ── */
-.topbar{background:#fff;border-bottom:1px solid var(--gray-md);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
-.app-brand{font-size:1rem;font-weight:700;color:var(--blue);white-space:nowrap}
-.trip-name-pill{font-size:.75rem;background:var(--blue-lt);color:var(--blue);padding:3px 10px;border-radius:100px;font-weight:600}
+.topbar{background:var(--blue-dk);border-bottom:3px solid var(--amber-bright);padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.brand-block{display:flex;flex-direction:column;line-height:1.15}
+.brand-sub{font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--amber-bright);opacity:.9}
+.app-brand{font-size:.95rem;font-weight:700;color:#fff;white-space:nowrap;letter-spacing:.01em}
+.trip-name-pill{font-size:.72rem;background:var(--amber-bright);color:#fff;padding:3px 10px;border-radius:100px;font-weight:700;letter-spacing:.02em}
+.topbar-btn{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 14px;font-size:.82rem;border-radius:7px}
+.topbar-btn:hover{background:rgba(255,255,255,.18)}
+.topbar-btn-amber{background:var(--amber-bright);color:#fff;border:none;padding:7px 16px;font-size:.82rem;border-radius:7px}
+.topbar-btn-amber:hover{opacity:.88}
 .page{max-width:1000px;margin:0 auto;padding:20px 16px}
 
 /* ── Tabs ── */
@@ -131,9 +138,10 @@ button:active:not(:disabled){transform:scale(.97)}
 .chip-icons{display:inline-flex;gap:2px;margin-left:4px;font-size:.65rem}
 
 /* ── Chaperone view ── */
-.chap-view-hdr{background:var(--blue);color:#fff;padding:16px 20px;text-align:center}
-.chap-view-hdr h1{font-size:1.15rem;color:#fff;margin-bottom:3px}
-.chap-view-hdr p{font-size:.82rem;opacity:.85}
+.chap-view-hdr{background:var(--blue-dk);border-bottom:3px solid var(--amber-bright);color:#fff;padding:14px 20px;text-align:center}
+.chap-view-hdr .chap-brand{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber-bright);margin-bottom:4px}
+.chap-view-hdr h1{font-size:1.1rem;color:#fff;margin-bottom:2px}
+.chap-view-hdr p{font-size:.8rem;opacity:.8}
 .student-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--gray-md);background:#fff;gap:12px}
 .student-row:last-child{border-bottom:none}
 .sname{font-weight:500;font-size:.95rem;flex:1}
@@ -328,13 +336,16 @@ function renderShell(){
 
   setRoot(`
     <div class="topbar">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="app-brand">Field Trip Roster</span>
-        <span class="trip-name-pill">${esc(S.tripName)}</span>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="brand-block">
+          <span class="brand-sub">The Calculated Classroom</span>
+          <span class="app-brand">Field Trip Manager</span>
+        </div>
+        ${S.tripName?`<span class="trip-name-pill">${esc(S.tripName)}</span>`:''}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn-ghost btn" onclick="newTrip()">New Trip</button>
-        <button class="btn btn-green" onclick="goDash()">Live Dashboard →</button>
+        <button class="topbar-btn" onclick="newTrip()">New Trip</button>
+        <button class="topbar-btn-amber" onclick="goDash()">Live Dashboard →</button>
       </div>
     </div>
     <div class="page">
@@ -570,10 +581,11 @@ function renderActiveTab(){
 
 function renderLanding(){
   setRoot(`<div class="landing">
-    <div style="font-size:2.5rem;margin-bottom:12px">🚌</div>
-    <h2 style="margin-bottom:8px">Field Trip Roster</h2>
-    <p class="hint" style="margin-bottom:28px">Manage students & chaperones independently, group them flexibly, and share live check-in links.</p>
-    <input type="text" id="tname" style="margin-bottom:12px" placeholder="Trip name (e.g. Science Museum 2026)">
+    <div style="font-size:.65rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:6px">The Calculated Classroom</div>
+    <div style="font-size:2rem;margin-bottom:8px">🚌</div>
+    <h2 style="margin-bottom:8px;color:var(--blue-dk)">Field Trip Manager</h2>
+    <p class="hint" style="margin-bottom:28px">Manage students & chaperones, group them by bus, and share live check-in links with your team.</p>
+    <input type="text" id="tname" style="margin-bottom:12px" placeholder="Trip name (e.g. Universal Studios 2026)">
     <button class="btn btn-primary btn-lg" onclick="createSession()">Create Trip</button>
   </div>`);
 }
@@ -1402,13 +1414,16 @@ function renderDashView(){
   }).join('');
 
   setRoot(`<div class="topbar">
-    <div>
-      <div class="app-brand">${esc(S.tripName||'Field Trip')}</div>
-      <div class="live-badge" style="margin-top:3px"><span class="live-dot"></span> Live</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="brand-block">
+        <span class="brand-sub">The Calculated Classroom</span>
+        <span class="app-brand">${esc(S.tripName||'Field Trip Manager')}</span>
+      </div>
+      <div class="live-badge" style="color:var(--amber-bright);margin-left:4px"><span class="live-dot" style="background:var(--amber-bright)"></span> Live</div>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn-ghost btn" onclick="showDashQR()" title="QR code for this dashboard">📱 QR</button>
-      <button class="btn-ghost btn" onclick="history.back()">← Setup</button>
+      <button class="topbar-btn" onclick="showDashQR()" title="QR code for this dashboard">📱 QR</button>
+      <button class="topbar-btn" onclick="history.back()">← Setup</button>
     </div>
   </div>
   <div class="phase-bar">
@@ -1532,6 +1547,7 @@ function renderChapView(){
 
   setRoot(`<div style="min-height:100vh;display:flex;flex-direction:column">
     <div class="chap-view-hdr" style="background:${phaseColor}">
+      <div class="chap-brand">The Calculated Classroom · Field Trip Manager</div>
       <h1>${esc(CV.busName||'Bus')} — ${esc(CV.chapName||'Chaperone')}</h1>
       <p>Tap a student to mark them</p>
     </div>
