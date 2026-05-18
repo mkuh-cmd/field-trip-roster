@@ -170,6 +170,21 @@ button:active:not(:disabled){transform:scale(.97)}
 .user-avatar{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.35);object-fit:cover}
 .user-name{color:rgba(255,255,255,.85);font-size:.78rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* ── Footer ── */
+.app-footer{background:var(--blue-dk);border-top:3px solid var(--amber-bright);color:rgba(255,255,255,.7);margin-top:48px}
+.footer-inner{max-width:1000px;margin:0 auto;padding:40px 24px 28px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px}
+@media(max-width:680px){.footer-inner{grid-template-columns:1fr 1fr;gap:24px}.footer-brand-col{grid-column:1/-1}}
+.footer-brand{font-size:1rem;font-weight:700;color:#fff;margin-bottom:4px}
+.footer-tagline{font-size:.78rem;color:rgba(255,255,255,.5);line-height:1.5;margin-bottom:14px}
+.footer-badge{display:inline-block;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--amber-bright);color:#fff;padding:2px 8px;border-radius:100px}
+.footer-col-title{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber-bright);margin-bottom:12px}
+.footer-links{list-style:none;display:flex;flex-direction:column;gap:8px}
+.footer-links a{color:rgba(255,255,255,.65);font-size:.83rem;text-decoration:none;transition:color .15s}
+.footer-links a:hover{color:#fff}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.1);padding:16px 24px;max-width:1000px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.footer-copy{font-size:.75rem;color:rgba(255,255,255,.4)}
+.footer-version{font-size:.72rem;color:rgba(255,255,255,.3)}
+
 /* ── Misc ── */
 .tag{display:inline-block;font-size:.72rem;padding:2px 7px;border-radius:100px;font-weight:600;background:var(--gray-lt);color:var(--gray)}
 .tag-blue{background:var(--blue-lt);color:var(--blue)}
@@ -296,6 +311,7 @@ function renderSignIn(){
         Sign in with Google
       </button>
     </div>
+    ${getFooter()}
   `);
 }
 
@@ -309,6 +325,47 @@ function signInWithGoogle(){
 function signOut(){
   if(!confirm('Sign out of Field Trip Manager?'))return;
   firebase.auth().signOut();
+}
+
+function getFooter(){
+  const year=new Date().getFullYear();
+  return`<footer class="app-footer">
+    <div class="footer-inner">
+      <div class="footer-brand-col">
+        <div class="footer-brand">The Calculated Classroom</div>
+        <div class="footer-tagline">Field Trip Manager makes check-in day seamless — real-time roster tracking, QR codes, and live dashboards for every bus.</div>
+        <span class="footer-badge">v1.0</span>
+      </div>
+      <div>
+        <div class="footer-col-title">Product</div>
+        <ul class="footer-links">
+          <li><a href="#" onclick="renderLanding();return false">My Trips</a></li>
+          <li><a href="#" onclick="newTrip();return false">New Trip</a></li>
+          <li><a href="https://mkuh-cmd.github.io/field-trip-roster/field_trip_roster.html" target="_blank">Live App</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Resources</div>
+        <ul class="footer-links">
+          <li><a href="https://docs.google.com/spreadsheets/d/1pItymKmYSmLzU2j4dwEDThE5BCeXqLl55_94ps5BLwc/copy" target="_blank">Sheet Template</a></li>
+          <li><a href="mailto:support@thecalculatedclassroom.com">Contact Support</a></li>
+          <li><a href="https://www.teacherspayteachers.com" target="_blank">TPT Store</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Legal</div>
+        <ul class="footer-links">
+          <li><a href="#" onclick="alert('Privacy Policy coming soon.');return false">Privacy Policy</a></li>
+          <li><a href="#" onclick="alert('Terms of Use coming soon.');return false">Terms of Use</a></li>
+          <li><a href="#" onclick="alert('Cookie Policy coming soon.');return false">Cookie Policy</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© ${year} The Calculated Classroom. All rights reserved.</span>
+      <span class="footer-version">Field Trip Manager · Built for educators</span>
+    </div>
+  </footer>`;
 }
 
 // Save trip metadata to Firebase under user's account
@@ -443,7 +500,7 @@ function renderShell(){
       <div id="tab-groups" class="tab-panel${activeTab==='groups'?' active':''}"></div>
       <div id="tab-share" class="tab-panel${activeTab==='share'?' active':''}"></div>
     </div>
-  `);
+  ${getFooter()}`);
   renderActiveTab();
 }
 
@@ -841,6 +898,7 @@ function renderLanding(){
         <div class="card-title" style="margin-bottom:10px">📋 My Trips</div>
         ${tripListHtml}
       </div>
+      ${getFooter()}
     `);
     $('tname')?.addEventListener('keydown',e=>{if(e.key==='Enter')createSession();});
   });
