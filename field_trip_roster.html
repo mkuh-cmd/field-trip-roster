@@ -592,9 +592,10 @@ function renderLanding(){
 
 function createSession(){
   const name=($('tname').value||'').trim();
-  if(!name){alert('Enter a trip name.');return;}
+  if(!name){alert('Enter a trip name first.');return;}
   S.sessionId=sid();S.tripName=name;
-  saveS();renderShell();
+  saveS();
+  try{renderShell();}catch(e){alert('Error loading app: '+e.message+'\n\nTry a hard refresh (Ctrl+Shift+R).');console.error(e);}
 }
 
 function newTrip(){
