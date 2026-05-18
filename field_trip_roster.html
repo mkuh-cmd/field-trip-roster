@@ -623,10 +623,11 @@ function renderStudentsTab(){
     const chapName=cid&&S.chaperones[cid]?S.chaperones[cid].name:'Unassigned';
     const bid=cid?S.chapBus[cid]||'':'';
     const busName=bid&&S.buses[bid]?S.buses[bid].name:'';
-    return`<div class="person-row">
-      <span class="person-name">${esc(s.name)}</span>
+    return`<div class="person-row" id="srow-${id}">
+      <span class="person-name" id="sname-${id}">${esc(s.name)}</span>
       ${cid?`<span class="tag tag-purple">${esc(chapName)}</span>`:'<span class="tag">Unassigned</span>'}
       ${busName?`<span class="tag tag-blue">${esc(busName)}</span>`:''}
+      <button class="btn-icon" title="Rename" onclick="inlineRenameStudent('${id}','students')">✏️</button>
       <button class="btn-icon" onclick="removeStudent('${id}')">✕</button>
     </div>`;
   }).join(''):`<div class="empty-state">No students yet. Add them below.</div>`;
@@ -677,6 +678,25 @@ function bulkAddStudents(){
 
 function removeStudent(id){
   delete S.students[id];delete S.studentChap[id];saveS();renderStudentsTab();
+}
+
+function inlineRenameStudent(id, context){
+  // context = 'students' (Students tab) or 'groups' (Groups tab)
+  const nameEl=$(context==='groups'?`gsname-${id}`:`sname-${id}`);
+  if(!nameEl||nameEl.tagName==='INPUT')return;
+  const current=S.students[id]?.name||'';
+  const inp=document.createElement('input');
+  inp.type='text';inp.value=current;
+  inp.style.cssText='flex:1;padding:4px 8px;font-size:.88rem;border:1px solid var(--blue);border-radius:6px;outline:none;width:100%';
+  nameEl.replaceWith(inp);
+  inp.focus();inp.select();
+  const commit=()=>{
+    const v=inp.value.trim();
+    if(v&&v!==current){S.students[id].name=v;saveS();}
+    if(context==='groups')renderGroupsTab();else renderStudentsTab();
+  };
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')commit();if(e.key==='Escape'){if(context==='groups')renderGroupsTab();else renderStudentsTab();}});
+  inp.addEventListener('blur',commit);
 }
 
 // ═══════════════════════════════════════════════
@@ -860,13 +880,14 @@ function renderGroupsTab(){
     Object.entries(bus.chaps).forEach(([cid,chap])=>{
       // Students assigned to this chaperone
       const stuRows=chap.students.map(st=>`
-        <div class="student-assign-row">
-          <span class="sa-name">${esc(st.name)}</span>
+        <div class="student-assign-row" id="grow-${st.id}">
+          <span class="sa-name" id="gsname-${st.id}">${esc(st.name)}</span>
+          <button class="btn-icon" title="Rename" style="font-size:.8rem;padding:3px 5px" onclick="inlineRenameStudent('${st.id}','groups')">✏️</button>
           <select class="assign-select" onchange="reassignStudent('${st.id}',this.value)" title="Move to chaperone">
             <option value="">— Move to —</option>
             ${Object.entries(S.chaperones).map(([cid2,c])=>`<option value="${cid2}"${cid2===cid?' selected':''}>${esc(c.name)}</option>`).join('')}
-            <option value="__unassign">Remove from group</option>
           </select>
+          <button class="btn-icon" title="Remove from group" style="color:var(--red);font-size:.85rem" onclick="removeStudentFromGroup('${st.id}')">✕</button>
         </div>`).join('');
 
       chapsHtml+=`<div class="chap-group">
@@ -881,6 +902,11 @@ function renderGroupsTab(){
         </div>
         <div class="chap-group-body">
           ${stuRows||'<p class="hint" style="font-size:.8rem;padding:4px 0">No students assigned yet.</p>'}
+          <div style="display:flex;gap:6px;padding:6px 0 2px;border-top:1px solid var(--gray-lt);margin-top:6px">
+            <input type="text" id="qadd-${cid}" placeholder="Add student to this group…" style="flex:1;padding:5px 9px;font-size:.82rem;border:1px solid var(--gray-md);border-radius:6px;outline:none"
+              onkeydown="if(event.key==='Enter')addStudentToChap('${cid}')">
+            <button class="btn-sm" style="white-space:nowrap;background:var(--green-lt);color:var(--green)" onclick="addStudentToChap('${cid}')">+ Add</button>
+          </div>
         </div>
       </div>`;
     });
@@ -941,6 +967,22 @@ function reassignChaperone(cid,bid){
   if(bid==='__unassign') S.chapBus[cid]='';
   else if(bid) S.chapBus[cid]=bid;
   else return;
+  saveS();renderGroupsTab();
+}
+
+function addStudentToChap(cid){
+  const inp=$(`qadd-${cid}`);
+  if(!inp)return;
+  const name=inp.value.trim();
+  if(!name)return;
+  const id=uid();
+  S.students[id]={name};
+  S.studentChap[id]=cid;
+  saveS();renderGroupsTab();
+}
+
+function removeStudentFromGroup(sid){
+  S.studentChap[sid]='';
   saveS();renderGroupsTab();
 }
 
