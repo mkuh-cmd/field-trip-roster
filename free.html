@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Field Trip Manager — Free | The Calculated Classroom</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1e3a5f;--blue-lt:#e8edf5;--blue-dk:#12263f;
+  --amber:#c47f0a;--amber-lt:#fef3c7;--amber-bright:#f59e0b;
+  --green:#16a34a;--green-lt:#dcfce7;
+  --red:#dc2626;--red-lt:#fee2e2;
+  --purple:#7c3aed;--purple-lt:#ede9fe;
+  --gray:#6b7280;--gray-lt:#f3f4f6;--gray-md:#e5e7eb;
+  --text:#111827;--muted:#6b7280;--radius:10px;
+  --teal:#0d9488;--teal-lt:#ccfbf1;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f1f5f9;color:var(--text);min-height:100vh;font-size:15px}
+
+/* ── Topbar ── */
+.topbar{background:var(--blue-dk);border-bottom:3px solid var(--amber-bright);padding:11px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
+.brand-block{display:flex;flex-direction:column;line-height:1.15}
+.brand-sub{font-size:.65rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--amber-bright);opacity:.9}
+.app-brand{font-size:.95rem;font-weight:700;color:#fff;white-space:nowrap}
+.free-badge{font-size:.65rem;font-weight:700;letter-spacing:.06em;background:rgba(255,255,255,.12);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2);padding:2px 8px;border-radius:100px;white-space:nowrap}
+.trip-pill{font-size:.72rem;background:var(--amber-bright);color:#fff;padding:3px 10px;border-radius:100px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn-upgrade{background:var(--amber-bright);color:#fff;border:none;padding:7px 16px;font-size:.82rem;border-radius:7px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}
+.btn-upgrade:hover{opacity:.88}
+.topbar-btn{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:7px 14px;font-size:.82rem;border-radius:7px;cursor:pointer}
+.topbar-btn:hover{background:rgba(255,255,255,.18)}
+
+/* ── Layout ── */
+.page{max-width:1000px;margin:0 auto;padding:20px 16px}
+
+/* ── Free limit bar ── */
+.limit-bar{background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.limit-item{display:flex;align-items:center;gap:8px;font-size:.82rem}
+.limit-label{color:var(--muted);font-weight:500}
+.limit-track{width:80px;height:6px;background:var(--gray-md);border-radius:100px;overflow:hidden}
+.limit-fill{height:100%;background:var(--green);border-radius:100px;transition:width .3s}
+.limit-fill.warn{background:var(--amber-bright)}
+.limit-fill.full{background:var(--red)}
+.limit-count{font-weight:700;font-size:.82rem}
+.limit-count.warn{color:var(--amber)}
+.limit-count.full{color:var(--red)}
+.limit-sep{color:var(--gray-md);font-size:.9rem}
+
+/* ── Upgrade prompt ── */
+.upgrade-prompt{background:var(--amber-lt);border:1px solid #fcd34d;border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.upgrade-prompt-text{flex:1;font-size:.875rem;color:#92400e}
+.upgrade-prompt-text strong{display:block;margin-bottom:2px}
+
+/* ── Tabs ── */
+.tab-bar{display:flex;background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:4px;gap:4px;margin-bottom:20px}
+.tab-btn{flex:1;padding:8px 4px;border:none;background:transparent;border-radius:7px;font-family:inherit;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.tab-btn.active{background:var(--blue);color:#fff}
+.tab-btn:not(.active):hover{background:var(--gray-lt);color:var(--text)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* ── Cards ── */
+.card{background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.card-title{font-weight:700;font-size:.95rem;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.empty-state{text-align:center;padding:32px 16px;color:var(--muted);font-size:.875rem}
+h2{font-size:1.25rem;font-weight:700}
+.hint{color:var(--muted);font-size:.85rem;line-height:1.5;margin-bottom:12px}
+.section-hdr{font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 8px}
+
+/* ── Inputs ── */
+input[type=text],input[type=url],textarea,select{
+  width:100%;border:1px solid var(--gray-md);border-radius:8px;padding:9px 12px;
+  font-family:inherit;font-size:.9rem;outline:none;background:#fff;color:var(--text);transition:border-color .15s}
+input[type=text]:focus,input[type=url]:focus,textarea:focus,select:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:90px;line-height:1.6}
+.input-row{display:flex;gap:8px;flex-wrap:wrap}
+.input-row input,.input-row select{flex:1;min-width:140px}
+
+/* ── Buttons ── */
+button{font-family:inherit;font-weight:600;border:none;border-radius:8px;cursor:pointer;transition:opacity .15s,transform .1s;white-space:nowrap}
+button:active:not(:disabled){transform:scale(.97)}
+.btn{padding:9px 18px;font-size:.875rem}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{opacity:.88}
+.btn-ghost{background:transparent;color:var(--blue);padding:6px 10px;font-size:.875rem}.btn-ghost:hover{background:var(--blue-lt)}
+.btn-sm{background:var(--gray-lt);color:var(--text);padding:6px 12px;font-size:.8rem}.btn-sm:hover{background:var(--gray-md)}
+.btn-danger{background:var(--red-lt);color:var(--red);padding:5px 10px;font-size:.8rem}
+.btn-icon{background:none;padding:4px 7px;font-size:.95rem;color:var(--muted)}.btn-icon:hover{color:var(--red)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{opacity:.88}
+.btn-lg{padding:13px 28px;font-size:1rem;width:100%}
+.btn-disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+
+/* ── People lists ── */
+.people-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:620px){.people-layout{grid-template-columns:1fr}}
+.person-row{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--gray-lt);transition:background .1s}
+.person-row:last-child{border-bottom:none}
+.person-row:hover{background:var(--gray-lt)}
+.person-name{flex:1;font-size:.9rem;font-weight:500}
+.count-badge{font-size:.72rem;background:var(--gray-lt);color:var(--muted);padding:2px 7px;border-radius:100px;font-weight:600}
+
+/* ── Groups tab ── */
+.bus-block{background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+.bus-block-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--blue);color:#fff;gap:8px}
+.bus-block-hdr h3{color:#fff;font-size:.95rem}
+.bus-body{padding:10px 14px}
+.chap-group{border:1px solid var(--gray-md);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.chap-group-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--purple-lt);flex-wrap:wrap}
+.chap-group-name{font-weight:700;font-size:.88rem;color:var(--purple);flex:1}
+.chap-group-body{padding:8px 12px}
+.student-assign-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--gray-lt)}
+.student-assign-row:last-child{border-bottom:none}
+.sa-name{flex:1;font-size:.88rem}
+.assign-select{width:auto;flex:1;max-width:200px;padding:4px 8px;font-size:.8rem;border-radius:6px;min-width:120px}
+.unassigned-block{background:#fff;border:1px dashed var(--gray-md);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+.unassigned-pill{display:inline-flex;align-items:center;gap:6px;background:var(--gray-lt);border-radius:6px;padding:5px 10px;margin:4px;font-size:.83rem}
+.unassigned-pill select{border:none;background:transparent;font-size:.8rem;color:var(--blue);font-weight:600;padding:0;width:auto;outline:none;cursor:pointer}
+
+/* ── Check-in / QR ── */
+.link-item{border:1px solid var(--gray-md);border-radius:8px;padding:12px;margin-top:12px}
+.link-item-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap}
+.link-url{font-size:.72rem;color:var(--muted);word-break:break-all;background:var(--gray-lt);padding:6px 8px;border-radius:6px;margin-bottom:8px}
+.qr-wrap{display:flex;justify-content:center;padding:8px 0}
+.bus-share-label{font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 0 6px;padding-top:4px;border-top:1px solid var(--gray-md)}
+
+/* ── Dashboard ── */
+.live-badge{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;color:var(--green);font-weight:600}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.summary-bar{display:flex;gap:20px;flex-wrap:wrap;background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:14px 20px;margin-bottom:16px}
+.stat{display:flex;flex-direction:column;align-items:center}
+.stat-num{font-size:1.6rem;font-weight:700}
+.stat-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ng{color:var(--green)}.nr{color:var(--red)}.na{color:var(--amber)}
+.dash-bus{background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+.dash-bus-hdr{padding:10px 16px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:space-between}
+.dash-bus-hdr h3{color:#fff}
+.dash-chap{border-top:1px solid var(--gray-md);padding:10px 16px}
+.dash-chap-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:4px}
+.dash-chap-name{font-weight:700;font-size:.9rem}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:.72rem;padding:3px 8px;border-radius:100px;font-weight:500}
+.chip-p{background:var(--green-lt);color:var(--green)}
+.chip-a{background:var(--red-lt);color:var(--red)}
+.chip-n{background:var(--gray-lt);color:var(--gray)}
+.chip-b{background:#dbeafe;color:#1d4ed8}
+.phase-bar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;flex-wrap:wrap}
+.phase-bar-lbl{font-size:.78rem;font-weight:600;color:#6b7280;white-space:nowrap}
+.phase-btn{font-size:.78rem;font-weight:700;padding:5px 14px;border-radius:100px;border:2px solid transparent;cursor:pointer;transition:all .15s}
+.phase-btn.active-boarding{background:#dcfce7;color:#15803d;border-color:#16a34a}
+.phase-btn.active-endofnight{background:#dbeafe;color:#1d4ed8;border-color:#2563eb}
+.phase-btn.inactive{background:#f3f4f6;color:#9ca3af;border-color:transparent}
+
+/* ── Chaperone view ── */
+.chap-view-hdr{background:var(--blue-dk);border-bottom:3px solid var(--amber-bright);color:#fff;padding:14px 20px;text-align:center}
+.chap-view-hdr .chap-brand{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber-bright);margin-bottom:4px}
+.chap-view-hdr h1{font-size:1.1rem;color:#fff;margin-bottom:2px}
+.chap-view-hdr p{font-size:.8rem;opacity:.8}
+.student-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--gray-md);background:#fff;gap:12px}
+.student-row:last-child{border-bottom:none}
+.sname{font-weight:500;font-size:.95rem;flex:1}
+.sts-btns{display:flex;gap:6px;flex-shrink:0}
+.sts-btn{width:80px;height:40px;border-radius:8px;font-size:.8rem;font-weight:700;border:2px solid transparent;cursor:pointer;transition:all .15s}
+.sts-btn.p-btn{background:var(--green-lt);color:var(--green)}
+.sts-btn.p-btn.on{background:var(--green);color:#fff;border-color:var(--green)}
+.sts-btn.a-btn{background:var(--red-lt);color:var(--red)}
+.sts-btn.a-btn.on{background:var(--red);color:#fff;border-color:var(--red)}
+.chap-footer{position:sticky;bottom:0;background:#fff;border-top:2px solid var(--gray-md);padding:11px 20px;display:flex;justify-content:space-around;font-weight:700;font-size:.9rem}
+.fp{color:var(--green)}.fa{color:var(--red)}.fn{color:var(--gray)}
+@media(max-width:480px){.sts-btn{width:68px}}
+
+/* ── Setup / landing ── */
+.setup-card{max-width:480px;margin:48px auto;background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:36px 32px;text-align:center}
+@media(max-width:520px){.setup-card{margin:24px auto;padding:24px 18px}}
+.setup-logo{margin-bottom:20px}
+.setup-logo .sl-sub{font-size:.65rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber-bright);margin-bottom:4px}
+.setup-logo .sl-name{font-size:1.1rem;font-weight:700;color:var(--blue)}
+.setup-card h2{margin-bottom:8px}
+.setup-card .hint{margin-bottom:24px}
+.label{display:block;font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:5px;text-align:left}
+.form-group{text-align:left;margin-bottom:14px}
+
+/* ── Sheets banner ── */
+.sheets-banner{background:var(--teal-lt);border:1px solid #5eead4;border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.sheets-banner-icon{font-size:1.5rem;flex-shrink:0;margin-top:2px}
+.sheets-banner-body{flex:1;min-width:200px}
+.sheets-banner-title{font-weight:700;font-size:.9rem;color:var(--teal);margin-bottom:4px}
+.sync-status{font-size:.78rem;font-weight:600;padding:3px 9px;border-radius:100px}
+.sync-ok{background:var(--green-lt);color:var(--green)}
+.sync-err{background:var(--red-lt);color:var(--red)}
+.sync-pending{background:var(--gray-lt);color:var(--gray)}
+
+/* ── Upgrade modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:32px;max-width:420px;width:100%;position:relative;animation:slideUp .22s ease}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.4rem;color:var(--muted);cursor:pointer;line-height:1;padding:4px}
+.modal h3{font-size:1.3rem;font-weight:800;color:var(--blue);margin-bottom:8px}
+.modal p{font-size:.9rem;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.modal-compare{background:var(--gray-lt);border-radius:10px;padding:14px;margin-bottom:20px;font-size:.85rem}
+.modal-compare li{padding:4px 0;list-style:none;display:flex;gap:8px}
+.modal-compare li::before{content:'✓';color:var(--green);font-weight:700}
+.modal-compare li.no::before{content:'✗';color:var(--red)}
+.modal-compare li.no{color:var(--muted)}
+
+/* ── Footer ── */
+.app-footer{background:var(--blue-dk);border-top:3px solid var(--amber-bright);color:rgba(255,255,255,.7);margin-top:48px}
+.footer-inner{max-width:1000px;margin:0 auto;padding:32px 24px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.footer-brand{font-size:.95rem;font-weight:700;color:#fff;margin-bottom:4px}
+.footer-tagline{font-size:.76rem;color:rgba(255,255,255,.45);line-height:1.5}
+.footer-links{list-style:none;display:flex;gap:16px;flex-wrap:wrap}
+.footer-links a{color:rgba(255,255,255,.55);font-size:.8rem;text-decoration:none;transition:color .15s}
+.footer-links a:hover{color:#fff}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.08);padding:14px 24px;max-width:1000px;margin:0 auto;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.footer-copy{font-size:.74rem;color:rgba(255,255,255,.35)}
+
+/* Misc */
+a{color:var(--blue)}
+.tag{display:inline-block;font-size:.72rem;padding:2px 7px;border-radius:100px;font-weight:600;background:var(--gray-lt);color:var(--gray)}
+.tag-blue{background:var(--blue-lt);color:var(--blue)}
+.tag-green{background:var(--green-lt);color:var(--green)}
+.banner{padding:10px 16px;border-radius:8px;font-size:.85rem;margin-bottom:12px;display:none}
+.banner-success{background:var(--green-lt);color:var(--green);border:1px solid #86efac}
+.banner-err{background:var(--red-lt);color:var(--red);border:1px solid #fca5a5}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- UPGRADE MODAL -->
+<div class="modal-overlay" id="upgrade-modal" onclick="closeUpgradeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeUpgradeModal()">×</button>
+    <div style="font-size:2rem;margin-bottom:10px" id="modal-icon">🚀</div>
+    <h3 id="modal-title">Upgrade to Teacher Plan</h3>
+    <p id="modal-body">Unlock unlimited trips and students with the Teacher plan.</p>
+    <div class="modal-compare">
+      <ul id="modal-compare-list"></ul>
+    </div>
+    <a href="index.html#pricing" class="btn btn-primary btn-lg" style="display:block;text-align:center;text-decoration:none;margin-bottom:10px">See Pricing →</a>
+    <button onclick="closeUpgradeModal()" style="width:100%;padding:10px;background:var(--gray-lt);color:var(--text);border-radius:8px;font-size:.875rem;border:none">Continue with Free plan</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════
+// UTILS
+// ═══════════════════════════════════
+const uid  = () => Math.random().toString(36).slice(2,9);
+const sid  = () => Math.random().toString(36).slice(2,8) + Math.random().toString(36).slice(2,8);
+const esc  = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const $    = id => document.getElementById(id);
+const setRoot = html => $('root').innerHTML = html;
+const autoBase = () => ['http:','https:'].includes(location.protocol) ? location.origin + location.pathname : '';
+
+// ═══════════════════════════════════
+// FREE TIER LIMITS
+// ═══════════════════════════════════
+const FREE_MAX_TRIPS    = 2;
+const FREE_MAX_STUDENTS = 30;
+
+function getYearTrips() {
+  const yr = new Date().getFullYear();
+  try { return JSON.parse(localStorage.getItem('ftm_free_v1')||'{}')[yr] || []; } catch(e) { return []; }
+}
+function recordTrip(sessionId, name) {
+  const yr = new Date().getFullYear();
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem('ftm_free_v1')||'{}'); } catch(e){}
+  if (!data[yr]) data[yr] = [];
+  if (!data[yr].find(t => t.id === sessionId)) {
+    data[yr].push({ id: sessionId, name, created: Date.now() });
+    localStorage.setItem('ftm_free_v1', JSON.stringify(data));
+  }
+}
+function tripsUsed() {
+  const trips = getYearTrips();
+  // Don't count current active trip again
+  if (S.sessionId && trips.find(t => t.id === S.sessionId)) return trips.length;
+  return trips.length;
+}
+function canCreateTrip() {
+  if (S.sessionId) return true; // already in a trip
+  return getYearTrips().length < FREE_MAX_TRIPS;
+}
+function studentCount() { return Object.keys(S.students).length; }
+function canAddStudent() { return studentCount() < FREE_MAX_STUDENTS; }
+
+// ═══════════════════════════════════
+// FIREBASE (real-time check-in only)
+// ═══════════════════════════════════
+const FB_CONFIG = {
+  apiKey:"AIzaSyAHJXhuKk_sYNDRQ8-OC1Aw7l90wAaW7Sg",
+  authDomain:"field-trip-attendance.firebaseapp.com",
+  databaseURL:"https://field-trip-attendance-default-rtdb.firebaseio.com",
+  projectId:"field-trip-attendance",
+  storageBucket:"field-trip-attendance.firebasestorage.app",
+  messagingSenderId:"167205267344",
+  appId:"1:167205267344:web:8920fa000dbb544e21b515"
+};
+let _fbDb = null;
+function fbReady(){ return !!_fbDb; }
+function fbr(...parts){ return _fbDb ? _fbDb.ref(parts.join('/')) : null; }
+function fbTrip(sid,...parts){ return fbr('ftr', sid, ...parts); }
+(function fbLoad(){
+  try {
+    try{firebase.app();}catch(e){firebase.initializeApp(FB_CONFIG);}
+    _fbDb = firebase.database();
+  } catch(e){ console.warn('Firebase init failed:', e); }
+})();
+
+// ═══════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════
+const P        = new URLSearchParams(location.search);
+const VIEW     = P.get('v');
+const SID      = P.get('s');
+const BID      = P.get('b');
+const CID      = P.get('c');
+const URL_NAMES= P.get('n');
+const URL_BUS  = P.get('bn');
+const URL_CHAP = P.get('cn');
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (VIEW==='c' && SID && BID && CID) { initChaperone(); return; }
+  if (VIEW==='d' && SID) { initDashboard(); return; }
+  initTeacher();
+});
+
+// ═══════════════════════════════════
+// STATE
+// ═══════════════════════════════════
+let S = {
+  sessionId:null, tripName:'', baseUrl: autoBase(),
+  students:{}, chaperones:{}, buses:{},
+  studentChap:{}, chapBus:{},
+  sheetsId:'', sheetsLastSync:''
+};
+let activeTab = 'students';
+
+const loadS = () => {
+  try {
+    const d = localStorage.getItem('ftm_free_state');
+    if (d) { const p=JSON.parse(d); S={...S,...p}; if(!S.baseUrl)S.baseUrl=autoBase(); }
+  } catch(e){}
+};
+const saveS = () => localStorage.setItem('ftm_free_state', JSON.stringify(S));
+
+// ═══════════════════════════════════
+// UPGRADE MODAL
+// ═══════════════════════════════════
+function openUpgradeModal(reason) {
+  const configs = {
+    trips: {
+      icon: '🗓️',
+      title: "You've used both free trips",
+      body: `The free plan includes ${FREE_MAX_TRIPS} trips per year. Upgrade to the Teacher plan for unlimited trips — for less than a coffee per month.`,
+      compare: [
+        { text: `${FREE_MAX_TRIPS} trips/year`, no: true },
+        { text: `Up to ${FREE_MAX_STUDENTS} students`, no: true },
+        { text: 'Unlimited trips', no: false },
+        { text: 'Unlimited students', no: false },
+        { text: 'Trip history across devices', no: false },
+        { text: 'Priority support', no: false },
+      ]
+    },
+    students: {
+      icon: '👥',
+      title: "Student limit reached",
+      body: `The free plan supports up to ${FREE_MAX_STUDENTS} students per trip. Upgrade to Teacher plan for unlimited students on every trip.`,
+      compare: [
+        { text: `${FREE_MAX_STUDENTS} students max`, no: true },
+        { text: 'Unlimited students', no: false },
+        { text: 'Unlimited trips', no: false },
+        { text: 'Trip history across devices', no: false },
+      ]
+    }
+  };
+  const c = configs[reason] || configs.trips;
+  $('modal-icon').textContent = c.icon;
+  $('modal-title').textContent = c.title;
+  $('modal-body').textContent  = c.body;
+  $('modal-compare-list').innerHTML = c.compare.map(i =>
+    `<li class="${i.no?'no':''}">${esc(i.text)}</li>`
+  ).join('');
+  $('upgrade-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeUpgradeModal(e) {
+  if (e && e.target !== $('upgrade-modal')) return;
+  $('upgrade-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeUpgradeModal(); });
+
+// ═══════════════════════════════════
+// TEACHER VIEW INIT
+// ═══════════════════════════════════
+function initTeacher() {
+  loadS();
+  if (S.sessionId) renderShell();
+  else renderSetup();
+}
+
+// ─── Setup screen ───────────────────
+function renderSetup() {
+  const used = getYearTrips().length;
+  const atLimit = used >= FREE_MAX_TRIPS;
+  const yr = new Date().getFullYear();
+  setRoot(`
+    <div class="topbar">
+      <div class="brand-block">
+        <span class="brand-sub">The Calculated Classroom</span>
+        <span class="app-brand">Field Trip Manager</span>
+      </div>
+      <div class="topbar-right">
+        <span class="free-badge">Free Plan · ${used}/${FREE_MAX_TRIPS} trips used in ${yr}</span>
+        <a href="index.html#pricing" class="btn-upgrade">Upgrade →</a>
+      </div>
+    </div>
+    <div class="setup-card">
+      <div class="setup-logo">
+        <div class="sl-sub">The Calculated Classroom</div>
+        <div class="sl-name">Field Trip Manager</div>
+      </div>
+      <h2>Start a New Trip</h2>
+      <p class="hint">No account needed. Enter your trip name and you're ready.</p>
+      ${atLimit ? `
+        <div class="upgrade-prompt">
+          <span style="font-size:1.4rem">🗓️</span>
+          <div class="upgrade-prompt-text">
+            <strong>You've used both free trips for ${yr}</strong>
+            Upgrade to Teacher plan for unlimited trips — $29/year.
+          </div>
+          <a href="index.html#pricing" class="btn-upgrade" style="white-space:nowrap">See plans →</a>
+        </div>
+      ` : ''}
+      <div class="form-group">
+        <label class="label" for="trip-name-input">Trip name</label>
+        <input type="text" id="trip-name-input" placeholder="Universal Studios 2026" maxlength="80"
+          ${atLimit ? 'disabled' : ''}>
+      </div>
+      <div class="form-group">
+        <label class="label" for="sheets-url-input">Google Sheet URL <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+        <input type="url" id="sheets-url-input" placeholder="https://docs.google.com/spreadsheets/d/..."
+          value="${esc(S.sheetsId ? 'https://docs.google.com/spreadsheets/d/'+S.sheetsId : '')}">
+        <div style="font-size:.76rem;color:var(--muted);margin-top:4px">Paste your roster sheet URL to auto-import students &amp; chaperones.</div>
+      </div>
+      <button class="btn btn-primary btn-lg" onclick="createTrip()" ${atLimit ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>
+        Create Trip →
+      </button>
+      <div style="margin-top:20px;font-size:.78rem;color:var(--muted)">
+        Need more than ${FREE_MAX_TRIPS} trips or ${FREE_MAX_STUDENTS} students?
+        <a href="index.html#pricing">See the Teacher plan →</a>
+      </div>
+    </div>
+    ${getFooter()}
+  `);
+  if (!atLimit) {
+    $('trip-name-input').addEventListener('keydown', e => { if(e.key==='Enter') createTrip(); });
+  }
+}
+
+function createTrip() {
+  if (!canCreateTrip()) { openUpgradeModal('trips'); return; }
+  const name = ($('trip-name-input')?.value||'').trim();
+  if (!name) { alert('Enter a trip name first.'); return; }
+  const rawUrl = ($('sheets-url-input')?.value||'').trim();
+  if (rawUrl) {
+    const m = rawUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+    const id = m ? m[1] : rawUrl;
+    if (id && id.length >= 20) S.sheetsId = id;
+  }
+  S.sessionId = sid();
+  S.tripName  = name;
+  S.students  = {};
+  S.chaperones= {};
+  S.buses     = {};
+  S.studentChap = {};
+  S.chapBus   = {};
+  saveS();
+  recordTrip(S.sessionId, name);
+  if (S.sheetsId) syncSheets(() => renderShell());
+  else renderShell();
+}
+
+function endTrip() {
+  if (!confirm(`End trip "${S.tripName}"?\n\nYour data will be cleared from this device. Live check-in data will remain accessible via the original links until Firebase expires it.`)) return;
+  S.sessionId = null; S.tripName = ''; S.students = {}; S.chaperones = {}; S.buses = {};
+  S.studentChap = {}; S.chapBus = {}; S.sheetsLastSync = '';
+  saveS();
+  renderSetup();
+}
+
+// ─── App shell ──────────────────────
+function renderShell() {
+  const used  = getYearTrips().length;
+  const sCnt  = studentCount();
+  const sPct  = Math.min(100, Math.round(sCnt / FREE_MAX_STUDENTS * 100));
+  const sFill = sPct >= 100 ? 'full' : sPct >= 80 ? 'warn' : '';
+
+  setRoot(`
+    <div class="topbar">
+      <div class="brand-block">
+        <span class="brand-sub">The Calculated Classroom</span>
+        <span class="app-brand">Field Trip Manager</span>
+      </div>
+      <div class="topbar-right">
+        <span class="trip-pill">${esc(S.tripName)}</span>
+        <a href="index.html#pricing" class="btn-upgrade">Upgrade →</a>
+        <button class="topbar-btn" onclick="endTrip()">End Trip</button>
+      </div>
+    </div>
+    <div class="page">
+      <div class="limit-bar">
+        <div class="limit-item">
+          <span class="limit-label">Trips this year:</span>
+          <div class="limit-track"><div class="limit-fill ${used>=FREE_MAX_TRIPS?'full':used>=1?'warn':''}" style="width:${Math.min(100,used/FREE_MAX_TRIPS*100)}%"></div></div>
+          <span class="limit-count ${used>=FREE_MAX_TRIPS?'full':used>=1?'warn':''}">${used}/${FREE_MAX_TRIPS}</span>
+        </div>
+        <span class="limit-sep">|</span>
+        <div class="limit-item">
+          <span class="limit-label">Students:</span>
+          <div class="limit-track"><div class="limit-fill ${sFill}" style="width:${sPct}%"></div></div>
+          <span class="limit-count ${sFill}">${sCnt}/${FREE_MAX_STUDENTS}</span>
+        </div>
+        <span class="limit-sep">|</span>
+        <span style="font-size:.8rem;color:var(--muted)">Need more? <a href="index.html#pricing" style="font-weight:600">Upgrade →</a></span>
+      </div>
+
+      <div class="tab-bar">
+        <button class="tab-btn ${activeTab==='students'?'active':''}"   onclick="switchTab('students')">Students</button>
+        <button class="tab-btn ${activeTab==='chaperones'?'active':''}" onclick="switchTab('chaperones')">Chaperones</button>
+        <button class="tab-btn ${activeTab==='groups'?'active':''}"     onclick="switchTab('groups')">Groups</button>
+        <button class="tab-btn ${activeTab==='checkin'?'active':''}"    onclick="switchTab('checkin')">Check-In</button>
+      </div>
+
+      <div id="tab-content"></div>
+    </div>
+    ${getFooter()}
+  `);
+  renderTab();
+}
+
+function switchTab(t) { activeTab = t; renderShell(); }
+
+function renderTab() {
+  const el = $('tab-content');
+  if (!el) return;
+  if (activeTab==='students')   el.innerHTML = getStudentsTab();
+  if (activeTab==='chaperones') el.innerHTML = getChaperonesTab();
+  if (activeTab==='groups')     el.innerHTML = getGroupsTab();
+  if (activeTab==='checkin')    el.innerHTML = getCheckinTab();
+  if (activeTab==='checkin')    buildQRs();
+}
+
+// ═══════════════════════════════════
+// STUDENTS TAB
+// ═══════════════════════════════════
+function getStudentsTab() {
+  const ids = Object.keys(S.students);
+  const atLimit = !canAddStudent();
+  return `
+    <div class="card">
+      <div class="card-title">
+        🎒 Students
+        <span class="count-badge">${ids.length}/${FREE_MAX_STUDENTS}</span>
+        ${atLimit ? `<span style="font-size:.75rem;color:var(--red);font-weight:600">Limit reached — <a href="index.html#pricing">upgrade</a></span>` : ''}
+      </div>
+      ${S.sheetsId ? `
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="syncSheets()">🔄 Re-sync from Sheets</button>
+          <span id="sync-lbl" class="sync-status sync-pending" style="display:${S.sheetsLastSync?'inline-block':'none'}">${esc(S.sheetsLastSync)}</span>
+        </div>` : ''}
+      <div class="people-layout">
+        <div>
+          <div class="section-hdr">Add students</div>
+          <div class="input-row" style="margin-bottom:8px">
+            <input type="text" id="s-add-input" placeholder="Student name" maxlength="60"
+              ${atLimit ? 'disabled placeholder="Limit reached — upgrade for more"' : ''}>
+            <button class="btn btn-primary" onclick="addStudent()" ${atLimit ? 'disabled style="opacity:.4"' : ''}>Add</button>
+          </div>
+          <div class="hint">Or paste multiple names (one per line):</div>
+          <textarea id="s-bulk" placeholder="Alice Johnson&#10;Bob Smith&#10;Carlos Rivera" rows="4"
+            ${atLimit ? 'disabled' : ''}></textarea>
+          <button class="btn btn-sm" style="margin-top:8px" onclick="bulkAddStudents()" ${atLimit ? 'disabled style="opacity:.4"' : ''}>Add All</button>
+        </div>
+        <div>
+          <div class="section-hdr">Roster (${ids.length})</div>
+          <div id="students-list">
+            ${ids.length===0 ? '<div class="empty-state">No students yet</div>' :
+              ids.map(id => `
+                <div class="person-row">
+                  <span class="person-name" id="sname-${id}">${esc(S.students[id].name)}</span>
+                  <button class="btn-icon" title="Rename" onclick="inlineRenameStudent('${id}')">✏️</button>
+                  <button class="btn-icon" title="Remove" onclick="removeStudent('${id}')">🗑️</button>
+                </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function addStudent(nameOverride) {
+  if (!canAddStudent()) { openUpgradeModal('students'); return; }
+  const name = nameOverride || ($('s-add-input')?.value||'').trim();
+  if (!name) return;
+  S.students[uid()] = { name };
+  saveS();
+  renderShell();
+}
+
+function bulkAddStudents() {
+  const raw = ($('s-bulk')?.value||'').trim();
+  if (!raw) return;
+  const names = raw.split('\n').map(n=>n.trim()).filter(Boolean);
+  let added = 0;
+  for (const name of names) {
+    if (!canAddStudent()) { openUpgradeModal('students'); break; }
+    S.students[uid()] = { name }; added++;
+  }
+  if (added) { saveS(); renderShell(); }
+}
+
+function removeStudent(id) {
+  delete S.students[id];
+  delete S.studentChap[id];
+  saveS(); renderShell();
+}
+
+function inlineRenameStudent(id, ctx) {
+  const nameEl = $((ctx==='groups'?'gsname-':'sname-')+id);
+  if (!nameEl || nameEl.tagName==='INPUT') return;
+  const current = S.students[id]?.name||'';
+  const inp = document.createElement('input');
+  inp.type='text'; inp.value=current;
+  inp.style.cssText='flex:1;padding:4px 8px;font-size:.88rem;border:1px solid var(--blue);border-radius:6px;outline:none;width:100%';
+  nameEl.replaceWith(inp); inp.focus(); inp.select();
+  const commit = () => {
+    const v=inp.value.trim();
+    if(v&&v!==current){S.students[id].name=v;saveS();}
+    renderShell();
+  };
+  inp.addEventListener('keydown', e=>{if(e.key==='Enter')commit();if(e.key==='Escape')renderShell();});
+  inp.addEventListener('blur', commit);
+}
+
+// ═══════════════════════════════════
+// CHAPERONES TAB
+// ═══════════════════════════════════
+function getChaperonesTab() {
+  const cids = Object.keys(S.chaperones);
+  const bids = Object.keys(S.buses);
+  return `
+    <div class="card">
+      <div class="card-title">👤 Chaperones <span class="count-badge">${cids.length}</span></div>
+      <div class="people-layout">
+        <div>
+          <div class="section-hdr">Add chaperone</div>
+          <div class="input-row" style="margin-bottom:14px">
+            <input type="text" id="c-name" placeholder="Chaperone name" maxlength="60">
+            <button class="btn btn-primary" onclick="addChap()">Add</button>
+          </div>
+          <div class="section-hdr">Add bus</div>
+          <div class="input-row">
+            <input type="text" id="b-name" placeholder="Bus 1, Blue Bus…" maxlength="40">
+            <button class="btn btn-primary" onclick="addBus()">Add</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-hdr">Chaperones (${cids.length})</div>
+          ${cids.length===0 ? '<div class="empty-state">No chaperones yet</div>' :
+            cids.map(id=>`
+              <div class="person-row">
+                <span class="person-name">${esc(S.chaperones[id].name)}</span>
+                <button class="btn-icon" onclick="removeChap('${id}')">🗑️</button>
+              </div>`).join('')}
+          ${bids.length ? `
+            <div class="section-hdr" style="margin-top:14px">Buses (${bids.length})</div>
+            ${bids.map(id=>`
+              <div class="person-row">
+                <span class="person-name">🚌 ${esc(S.buses[id].name)}</span>
+                <button class="btn-icon" onclick="removeBus('${id}')">🗑️</button>
+              </div>`).join('')}` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function addChap() {
+  const name = ($('c-name')?.value||'').trim();
+  if (!name) return;
+  S.chaperones[uid()] = { name }; saveS(); renderShell();
+}
+function addBus() {
+  const name = ($('b-name')?.value||'').trim();
+  if (!name) return;
+  S.buses[uid()] = { name }; saveS(); renderShell();
+}
+function removeChap(id) {
+  delete S.chaperones[id];
+  Object.keys(S.chapBus).forEach(cid=>{ if(cid===id)delete S.chapBus[cid]; });
+  Object.keys(S.studentChap).forEach(sid=>{ if(S.studentChap[sid]===id)S.studentChap[sid]=''; });
+  saveS(); renderShell();
+}
+function removeBus(id) {
+  delete S.buses[id];
+  Object.keys(S.chapBus).forEach(cid=>{ if(S.chapBus[cid]===id)delete S.chapBus[cid]; });
+  saveS(); renderShell();
+}
+
+// ═══════════════════════════════════
+// GROUPS TAB
+// ═══════════════════════════════════
+function getGroupsTab() {
+  const cids = Object.keys(S.chaperones);
+  const bids = Object.keys(S.buses);
+  const sids = Object.keys(S.students);
+  if (!cids.length) return `<div class="card"><div class="empty-state">Add chaperones first (on the Chaperones tab).</div></div>`;
+
+  // Build bus → chaperones map
+  const busChaps = {};
+  const unassignedChaps = [];
+  cids.forEach(cid => {
+    const bid = S.chapBus[cid];
+    if (bid && S.buses[bid]) { if(!busChaps[bid])busChaps[bid]=[]; busChaps[bid].push(cid); }
+    else unassignedChaps.push(cid);
+  });
+
+  const unassignedStudents = sids.filter(sid => !S.studentChap[sid] || !S.chaperones[S.studentChap[sid]]);
+
+  let html = '';
+
+  // Unassigned students
+  if (unassignedStudents.length) {
+    html += `<div class="unassigned-block">
+      <div class="section-hdr" style="margin-top:0">Unassigned students (${unassignedStudents.length})</div>
+      ${unassignedStudents.map(sid=>`
+        <span class="unassigned-pill">
+          ${esc(S.students[sid].name)}
+          <select onchange="assignStudent('${sid}',this.value)">
+            <option value="">— assign —</option>
+            ${cids.map(cid=>`<option value="${cid}">${esc(S.chaperones[cid].name)}</option>`).join('')}
+          </select>
+        </span>`).join('')}
+    </div>`;
+  }
+
+  // By bus
+  bids.forEach(bid => {
+    const chapIds = busChaps[bid]||[];
+    html += `<div class="bus-block">
+      <div class="bus-block-hdr">
+        <h3>🚌 ${esc(S.buses[bid].name)}</h3>
+        <span style="font-size:.78rem;opacity:.75">${chapIds.length} chaperone${chapIds.length!==1?'s':''}</span>
+      </div>
+      <div class="bus-body">
+        ${chapIds.length===0 ? '<div class="empty-state" style="padding:16px">No chaperones assigned to this bus yet.</div>' :
+          chapIds.map(cid => chapGroupHtml(cid, bids, bid)).join('')}
+        <div style="margin-top:8px">
+          <select onchange="assignChapToBus(this.value,'${bid}')" style="width:auto;font-size:.82rem;padding:5px 8px">
+            <option value="">＋ Add chaperone to this bus</option>
+            ${unassignedChaps.map(cid=>`<option value="${cid}">${esc(S.chaperones[cid].name)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // Chaperones not on a bus
+  if (unassignedChaps.length) {
+    html += `<div class="card"><div class="card-title">Chaperones not assigned to a bus</div>
+      ${unassignedChaps.map(cid => chapGroupHtml(cid, bids, null)).join('')}
+    </div>`;
+  }
+
+  return html || '<div class="card"><div class="empty-state">Add students and chaperones first.</div></div>';
+}
+
+function chapGroupHtml(cid, bids, currentBid) {
+  const myStudents = Object.keys(S.students).filter(sid=>S.studentChap[sid]===cid);
+  return `<div class="chap-group">
+    <div class="chap-group-hdr">
+      <span class="chap-group-name">👤 ${esc(S.chaperones[cid].name)}</span>
+      <span class="count-badge">${myStudents.length} student${myStudents.length!==1?'s':''}</span>
+      ${bids.length ? `<select onchange="assignChapToBus('${cid}',this.value)" style="font-size:.78rem;padding:3px 6px;border-radius:6px;width:auto;border:1px solid var(--gray-md)">
+        <option value="">No bus</option>
+        ${bids.map(bid=>`<option value="${bid}" ${S.chapBus[cid]===bid?'selected':''}>${esc(S.buses[bid].name)}</option>`).join('')}
+      </select>` : ''}
+    </div>
+    <div class="chap-group-body">
+      ${myStudents.length===0 ? '<div style="color:var(--muted);font-size:.82rem;padding:4px 0">No students assigned</div>' :
+        myStudents.map(sid=>`
+          <div class="student-assign-row">
+            <span class="sa-name" id="gsname-${sid}">${esc(S.students[sid].name)}</span>
+            <button class="btn-icon" onclick="inlineRenameStudent('${sid}','groups')" title="Rename">✏️</button>
+            <button class="btn-icon" onclick="unassignStudent('${sid}')" title="Remove from group">✕</button>
+          </div>`).join('')}
+      <div class="input-row" style="margin-top:8px">
+        <input type="text" id="qadd-${cid}" placeholder="Add student to this group" maxlength="60"
+          ${!canAddStudent() ? 'disabled placeholder="Student limit reached"' : ''}>
+        <button class="btn btn-sm" onclick="addStudentToChap('${cid}')" ${!canAddStudent() ? 'disabled style="opacity:.4"':''}>Add</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function assignStudent(sid, cid) { S.studentChap[sid]=cid; saveS(); renderShell(); }
+function unassignStudent(sid) { S.studentChap[sid]=''; saveS(); renderShell(); }
+function assignChapToBus(cid, bid) { if(cid) S.chapBus[cid]=bid; saveS(); renderShell(); }
+function addStudentToChap(cid) {
+  if (!canAddStudent()) { openUpgradeModal('students'); return; }
+  const inp = $('qadd-'+cid);
+  const name = inp?.value.trim();
+  if (!name) return;
+  const id = uid();
+  S.students[id] = { name };
+  S.studentChap[id] = cid;
+  saveS(); renderShell();
+}
+
+// ═══════════════════════════════════
+// CHECK-IN TAB
+// ═══════════════════════════════════
+let _fbPushed = false;
+
+function getCheckinTab() {
+  const cids = Object.keys(S.chaperones);
+  const bids = Object.keys(S.buses);
+  if (!cids.length) return `<div class="card"><div class="empty-state">Add chaperones before generating check-in links.</div></div>`;
+
+  const base  = S.baseUrl || autoBase();
+  const sessId= S.sessionId;
+
+  // Group chaperones by bus
+  const busMap = {};
+  const noBus  = [];
+  cids.forEach(cid => {
+    const bid = S.chapBus[cid];
+    if (bid && S.buses[bid]) { if(!busMap[bid])busMap[bid]=[]; busMap[bid].push(cid); }
+    else noBus.push(cid);
+  });
+
+  function chapLinkHtml(cid) {
+    const myStudents = Object.keys(S.students).filter(sid=>S.studentChap[sid]===cid);
+    const bid  = S.chapBus[cid] || 'nobus';
+    const nm   = encodeURIComponent(myStudents.map(sid=>S.students[sid].name).join('|'));
+    const bn   = encodeURIComponent(S.buses[bid]?.name||'');
+    const cn   = encodeURIComponent(S.chaperones[cid].name);
+    const url  = `${base}?v=c&s=${sessId}&b=${cid}&c=${cid}&n=${nm}&bn=${bn}&cn=${cn}`;
+    const dashUrl = `${base}?v=d&s=${sessId}`;
+    return `
+      <div class="link-item">
+        <div class="link-item-hdr">
+          <strong style="font-size:.9rem">👤 ${esc(S.chaperones[cid].name)}</strong>
+          <span class="count-badge">${myStudents.length} student${myStudents.length!==1?'s':''}</span>
+          <button class="btn-sm" onclick="copyLink('${cid}-url')">Copy link</button>
+        </div>
+        <div class="link-url" id="${cid}-url">${url}</div>
+        <div class="qr-wrap" id="qr-${cid}"></div>
+      </div>`;
+  }
+
+  const dashUrl = `${base}?v=d&s=${sessId}`;
+  let html = `
+    <div class="card">
+      <div class="card-title">📡 Live Dashboard</div>
+      <p class="hint">Share this link to let anyone watch check-in progress in real time.</p>
+      <div class="link-url" id="dash-url">${dashUrl}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="copyLink('dash-url')">Copy dashboard link</button>
+        <button class="btn btn-primary btn" onclick="openDash()">Open dashboard →</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📲 Chaperone QR Codes</div>
+      <p class="hint">Each chaperone scans their code to open their personal roster. No app download needed.</p>
+      <button class="btn btn-green btn" onclick="pushToFirebase()" style="margin-bottom:12px">Generate QR links</button>
+      <div id="fb-banner" class="banner banner-success"></div>`;
+
+  bids.forEach(bid => {
+    const chaps = busMap[bid]||[];
+    if (!chaps.length) return;
+    html += `<div class="bus-share-label">🚌 ${esc(S.buses[bid].name)}</div>`;
+    chaps.forEach(cid => { html += chapLinkHtml(cid); });
+  });
+  if (noBus.length) {
+    if (bids.length) html += `<div class="bus-share-label">No bus assigned</div>`;
+    noBus.forEach(cid => { html += chapLinkHtml(cid); });
+  }
+  html += `</div>`;
+  return html;
+}
+
+function buildQRs() {
+  const cids = Object.keys(S.chaperones);
+  const base = S.baseUrl || autoBase();
+  cids.forEach(cid => {
+    const el = $('qr-'+cid);
+    if (!el || el.children.length) return;
+    const myStudents = Object.keys(S.students).filter(sid=>S.studentChap[sid]===cid);
+    const bid  = S.chapBus[cid] || 'nobus';
+    const nm   = encodeURIComponent(myStudents.map(sid=>S.students[sid].name).join('|'));
+    const bn   = encodeURIComponent(S.buses[bid]?.name||'');
+    const cn   = encodeURIComponent(S.chaperones[cid].name);
+    const url  = `${base}?v=c&s=${S.sessionId}&b=${cid}&c=${cid}&n=${nm}&bn=${bn}&cn=${cn}`;
+    try { new QRCode(el, { text:url, width:140, height:140, colorDark:'#12263f', colorLight:'#ffffff' }); }
+    catch(e){}
+  });
+}
+
+function copyLink(elId) {
+  const el = $(elId);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent.trim()).catch(()=>{});
+  const orig = el.style.background;
+  el.style.background='#d1fae5'; setTimeout(()=>el.style.background=orig,1200);
+}
+
+function openDash() {
+  const base = S.baseUrl || autoBase();
+  window.open(`${base}?v=d&s=${S.sessionId}`, '_blank');
+}
+
+function pushToFirebase() {
+  if (!fbReady() || !S.sessionId) return;
+  const busesData = {};
+  Object.keys(S.buses).forEach(bid => {
+    const chaps = {};
+    Object.keys(S.chaperones).filter(cid=>S.chapBus[cid]===bid).forEach(cid=>{
+      const studs = {};
+      Object.keys(S.students).filter(sid=>S.studentChap[sid]===cid).forEach(sid=>{
+        studs[sid] = S.students[sid].name;
+      });
+      chaps[cid] = { name:S.chaperones[cid].name, students:studs };
+    });
+    busesData[bid] = { name:S.buses[bid].name, chaperones:chaps };
+  });
+  fbTrip(S.sessionId).set({ tripName:S.tripName||'', buses:busesData }).then(()=>{
+    const b = $('fb-banner');
+    if (b) {
+      const total = Object.keys(S.students).length;
+      const buses = Object.keys(S.buses).length;
+      b.textContent = `✅ Firebase updated — ${buses} bus${buses!==1?'es':''}, ${total} student${total!==1?'s':''} — QR codes ready`;
+      b.style.display='block';
+      clearTimeout(b._t); b._t=setTimeout(()=>b.style.display='none',8000);
+    }
+  }).catch(e=>alert('Firebase error: '+e.message));
+}
+
+// ═══════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ═══════════════════════════════════
+function syncSheets(cb) {
+  if (!S.sheetsId) return;
+  const url = `https://docs.google.com/spreadsheets/d/${S.sheetsId}/gviz/tq?tqx=reqId:0;out:json`;
+  const lbl = $('sync-lbl');
+  if (lbl) { lbl.className='sync-status sync-pending'; lbl.textContent='Syncing…'; lbl.style.display='inline-block'; }
+  fetch(url)
+    .then(r=>r.text())
+    .then(raw=>{
+      const json=JSON.parse(raw.replace(/^[^{]*/,'').replace(/;?\s*$/,''));
+      const rows=(json.table?.rows||[]).map(r=>r.c?.map(c=>c?.v!=null?String(c.v).trim():''));
+      let students=[], chaperones=[], buses=[];
+      let mode='students';
+      rows.forEach(r=>{
+        if (!r||!r[0]) return;
+        const v=r[0].toLowerCase();
+        if(v.includes('chaperone')||v.includes('adult'))    {mode='chaperones';return;}
+        if(v.includes('bus')||v.includes('group'))          {mode='buses';return;}
+        if(v.includes('student')||v.includes('name'))       {mode='students';return;}
+        if(mode==='students')    students.push(r[0]);
+        if(mode==='chaperones')  chaperones.push(r[0]);
+        if(mode==='buses')       buses.push(r[0]);
+      });
+      // Merge in (don't erase existing)
+      const existingNames=new Set(Object.values(S.students).map(s=>s.name));
+      students.forEach(n=>{ if(n&&!existingNames.has(n)&&canAddStudent()) S.students[uid()]={name:n}; });
+      const existingChaps=new Set(Object.values(S.chaperones).map(c=>c.name));
+      chaperones.forEach(n=>{ if(n&&!existingChaps.has(n)) S.chaperones[uid()]={name:n}; });
+      const existingBuses=new Set(Object.values(S.buses).map(b=>b.name));
+      buses.forEach(n=>{ if(n&&!existingBuses.has(n)) S.buses[uid()]={name:n}; });
+      S.sheetsLastSync=new Date().toLocaleTimeString();
+      saveS();
+      if(lbl){lbl.className='sync-status sync-ok';lbl.textContent='Synced '+S.sheetsLastSync;}
+      if(cb) cb(); else renderShell();
+    })
+    .catch(e=>{
+      if(lbl){lbl.className='sync-status sync-err';lbl.textContent='Sync failed';}
+      console.error('Sheets sync error:',e);
+      if(cb) cb();
+    });
+}
+
+// ═══════════════════════════════════
+// CHAPERONE VIEW
+// ═══════════════════════════════════
+function initChaperone() {
+  if (!fbReady()) { setRoot('<p style="padding:32px;text-align:center">Connecting…</p>'); return; }
+  const names   = URL_NAMES ? decodeURIComponent(URL_NAMES).split('|').filter(Boolean) : [];
+  const busName = URL_BUS  ? decodeURIComponent(URL_BUS) : '';
+  const chapName= URL_CHAP ? decodeURIComponent(URL_CHAP) : 'Chaperone';
+  let statuses  = {};
+  let phase     = 'boarding';
+
+  function render() {
+    const pKey = phase==='boarding'?'status':'boardingStatus';
+    const vP   = phase==='boarding'?'present':'boarded';
+    const vA   = phase==='boarding'?'absent':'missing';
+    const countP = names.filter(n=>statuses[n]?.status===vP || statuses[n]?.boardingStatus===vP).length;
+    const countA = names.filter(n=>statuses[n]?.status===vA || statuses[n]?.boardingStatus===vA).length;
+    const countN = names.length - countP - countA;
+    setRoot(`
+      <div class="chap-view-hdr">
+        <div class="chap-brand">The Calculated Classroom · Field Trip Manager</div>
+        <h1>${esc(chapName)}</h1>
+        <p>${busName?'🚌 '+esc(busName)+' · ':''} ${names.length} student${names.length!==1?'s':''}</p>
+      </div>
+      <div class="phase-bar">
+        <span class="phase-bar-lbl">Phase:</span>
+        <button class="phase-btn ${phase==='boarding'?'active-boarding':'inactive'}" onclick="setPhase('boarding')">🚌 Boarding</button>
+        <button class="phase-btn ${phase==='endofnight'?'active-endofnight':'inactive'}" onclick="setPhase('endofnight')">🌙 End of Night</button>
+      </div>
+      <div>
+        ${names.map(name=>{
+          const st=statuses[name]||{};
+          const onP = phase==='boarding'?st.status===vP:st.boardingStatus===vP;
+          const onA = phase==='boarding'?st.status===vA:st.boardingStatus===vA;
+          return `<div class="student-row">
+            <span class="sname">${esc(name)}</span>
+            <div class="sts-btns">
+              <button class="sts-btn p-btn ${onP?'on':''}" onclick="markStudent('${CID}','${esc(name)}','${vP}','${phase}')">Present</button>
+              <button class="sts-btn a-btn ${onA?'on':''}" onclick="markStudent('${CID}','${esc(name)}','${vA}','${phase}')">Absent</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="chap-footer">
+        <span class="fp">✓ ${countP} Present</span>
+        <span class="fa">✗ ${countA} Absent</span>
+        <span class="fn">? ${countN} Unmarked</span>
+      </div>`);
+  }
+
+  window.setPhase  = t => { phase=t; render(); };
+  window.markStudent = (cid, name, val, ph) => {
+    const key = ph==='boarding'?'status':'boardingStatus';
+    if (!statuses[name]) statuses[name]={};
+    statuses[name][key]=val;
+    fbTrip(SID,'students','submitted',CID,name.replace(/\./g,'·')).update({ [key]:val });
+    render();
+  };
+
+  fbTrip(SID,'students','submitted',CID).on('value', snap=>{
+    const d=snap.val()||{};
+    Object.keys(d).forEach(k=>{statuses[k.replace(/·/g,'.')]=d[k];});
+    render();
+  });
+}
+
+// ═══════════════════════════════════
+// DASHBOARD VIEW
+// ═══════════════════════════════════
+function initDashboard() {
+  if (!fbReady()) { setRoot('<p style="padding:32px;text-align:center">Connecting…</p>'); return; }
+  let tripData = {};
+  let phase = 'boarding';
+
+  function render() {
+    const buses = tripData.buses || {};
+    const bids  = Object.keys(buses);
+    let totalStudents=0, totalPresent=0, totalAbsent=0;
+    bids.forEach(bid=>{
+      const chaps=buses[bid].chaperones||{};
+      Object.values(chaps).forEach(chap=>{
+        Object.keys(chap.students||{}).forEach(sname=>{
+          totalStudents++;
+          const st=(chap.checkins||{})[sname.replace(/\./g,'·')]||{};
+          if(phase==='boarding'&&st.status==='present') totalPresent++;
+          if(phase==='boarding'&&st.status==='absent')  totalAbsent++;
+          if(phase==='endofnight'&&st.boardingStatus==='boarded')  totalPresent++;
+          if(phase==='endofnight'&&st.boardingStatus==='missing')  totalAbsent++;
+        });
+      });
+    });
+    const pName = phase==='boarding'?'present':'boarded';
+    const aName = phase==='boarding'?'absent':'missing';
+
+    setRoot(`
+      <div class="topbar" style="position:sticky;top:0;z-index:100">
+        <div class="brand-block">
+          <span class="brand-sub">The Calculated Classroom</span>
+          <span class="app-brand">${esc(tripData.tripName||'Field Trip')}</span>
+        </div>
+        <div class="live-badge" style="margin-left:auto"><span class="live-dot"></span> Live</div>
+      </div>
+      <div class="page">
+        <div class="phase-bar" style="border-radius:var(--radius);border:1px solid var(--gray-md);padding:10px 16px;margin-bottom:12px;background:#fff">
+          <span class="phase-bar-lbl">Viewing:</span>
+          <button class="phase-btn ${phase==='boarding'?'active-boarding':'inactive'}" onclick="setDashPhase('boarding')">🚌 Boarding</button>
+          <button class="phase-btn ${phase==='endofnight'?'active-endofnight':'inactive'}" onclick="setDashPhase('endofnight')">🌙 End of Night</button>
+        </div>
+        <div class="summary-bar">
+          <div class="stat"><span class="stat-num">${totalStudents}</span><span class="stat-lbl">Total</span></div>
+          <div class="stat"><span class="stat-num ng">${totalPresent}</span><span class="stat-lbl">${pName}</span></div>
+          <div class="stat"><span class="stat-num nr">${totalAbsent}</span><span class="stat-lbl">${aName}</span></div>
+          <div class="stat"><span class="stat-num na">${totalStudents-totalPresent-totalAbsent}</span><span class="stat-lbl">Unmarked</span></div>
+          <div class="stat"><span class="stat-num" style="color:var(--blue)">${bids.length}</span><span class="stat-lbl">Buses</span></div>
+        </div>
+        ${bids.map(bid=>{
+          const busObj=buses[bid];
+          const chaps=busObj.chaperones||{};
+          return `<div class="dash-bus">
+            <div class="dash-bus-hdr"><h3>🚌 ${esc(busObj.name||bid)}</h3><span style="font-size:.78rem;opacity:.75">${Object.keys(chaps).length} chaperone${Object.keys(chaps).length!==1?'s':''}</span></div>
+            ${Object.keys(chaps).map(cid=>{
+              const chap=chaps[cid];
+              const studs=chap.students||{};
+              const checkins=chap.checkins||{};
+              return `<div class="dash-chap">
+                <div class="dash-chap-hdr">
+                  <span class="dash-chap-name">👤 ${esc(chap.name||cid)}</span>
+                  <span class="count-badge">${Object.keys(studs).length} students</span>
+                </div>
+                <div class="chips">
+                  ${Object.keys(studs).map(sname=>{
+                    const st=checkins[sname.replace(/\./g,'·')]||{};
+                    let cls='chip-n', lbl=sname;
+                    if(phase==='boarding'){
+                      if(st.status==='present')cls='chip-p';
+                      else if(st.status==='absent')cls='chip-a';
+                    } else {
+                      if(st.boardingStatus==='boarded')cls='chip-b';
+                      else if(st.boardingStatus==='missing')cls='chip-a';
+                    }
+                    return `<span class="chip ${cls}">${esc(sname)}</span>`;
+                  }).join('')}
+                </div>
+              </div>`;
+            }).join('')}
+          </div>`;
+        }).join('')}
+      </div>`);
+  }
+
+  window.setDashPhase = t => { phase=t; render(); };
+
+  // Merge check-in data into tripData
+  fbTrip(SID).on('value', snap=>{
+    const d=snap.val();
+    if (!d) { setRoot('<p style="padding:40px;text-align:center;color:var(--muted)">No trip data found for this session.</p>'); return; }
+    tripData = d;
+    // Merge submitted check-ins
+    const submitted=d.students?.submitted||{};
+    Object.keys(d.buses||{}).forEach(bid=>{
+      Object.keys(d.buses[bid].chaperones||{}).forEach(cid=>{
+        if (!tripData.buses[bid].chaperones[cid].checkins)
+          tripData.buses[bid].chaperones[cid].checkins={};
+        const chapSubmit=submitted[cid]||{};
+        Object.keys(chapSubmit).forEach(nameKey=>{
+          tripData.buses[bid].chaperones[cid].checkins[nameKey]=chapSubmit[nameKey];
+        });
+      });
+    });
+    render();
+  });
+}
+
+// ═══════════════════════════════════
+// FOOTER
+// ═══════════════════════════════════
+function getFooter() {
+  const yr = new Date().getFullYear();
+  return `<footer class="app-footer">
+    <div class="footer-inner">
+      <div>
+        <div style="font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber-bright);margin-bottom:4px">The Calculated Classroom</div>
+        <div class="footer-brand">Field Trip Manager</div>
+        <div class="footer-tagline" style="margin-top:4px">Free plan · Making field trips safer and simpler.</div>
+      </div>
+      <ul class="footer-links">
+        <li><a href="index.html">Landing page</a></li>
+        <li><a href="index.html#pricing">Upgrade plans</a></li>
+        <li><a href="field_trip_roster.html">Sign in (full version)</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="tos.html">Terms</a></li>
+      </ul>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© ${yr} The Calculated Classroom. All rights reserved.</span>
+      <span class="footer-copy">Free Plan · <a href="index.html#pricing" style="color:rgba(255,255,255,.5)">Upgrade →</a></span>
+    </div>
+  </footer>`;
+}
+</script>
+</body>
+</html>
