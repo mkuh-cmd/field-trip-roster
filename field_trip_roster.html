@@ -6,6 +6,7 @@
 <title>Field Trip Manager — The Calculated Classroom</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -154,9 +155,20 @@ button:active:not(:disabled){transform:scale(.97)}
 .chap-footer{position:sticky;bottom:0;background:#fff;border-top:2px solid var(--gray-md);padding:11px 20px;display:flex;justify-content:space-around;font-weight:700;font-size:.9rem}
 .fp{color:var(--green)}.fa{color:var(--red)}.fn{color:var(--gray)}
 
-/* ── Landing ── */
+/* ── Landing / Sign-in ── */
 .landing{max-width:440px;margin:60px auto;text-align:center;background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:40px 32px}
 @media(max-width:480px){.landing{margin:24px auto;padding:28px 20px}.sts-btn{width:68px}}
+.btn-google{display:inline-flex;align-items:center;gap:10px;background:#fff;color:#3c4043;border:1px solid #dadce0;padding:11px 22px;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:box-shadow .15s;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.btn-google:hover{box-shadow:0 2px 8px rgba(0,0,0,.15)}
+/* ── My Trips home ── */
+.trips-home{max-width:560px;margin:0 auto;padding:28px 16px}
+.trip-card{background:#fff;border:1px solid var(--gray-md);border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}
+.trip-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.trip-card-name{font-weight:700;font-size:.95rem;flex:1}
+.trip-card-date{font-size:.78rem;color:var(--muted)}
+/* ── User avatar in topbar ── */
+.user-avatar{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.35);object-fit:cover}
+.user-name{color:rgba(255,255,255,.85);font-size:.78rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* ── Misc ── */
 .tag{display:inline-block;font-size:.72rem;padding:2px 7px;border-radius:100px;font-weight:600;background:var(--gray-lt);color:var(--gray)}
@@ -233,9 +245,10 @@ const P=new URLSearchParams(location.search);
 const VIEW=P.get('v'),SID=P.get('s'),BID=P.get('b'),CID=P.get('c');
 const URL_NAMES=P.get('n'),URL_BUS=P.get('bn'),URL_CHAP=P.get('cn');
 window.addEventListener('DOMContentLoaded',()=>{
-  if(VIEW==='c'&&SID&&BID&&CID) initChaperone();
-  else if(VIEW==='d'&&SID) initDashboard();
-  else initSetup();
+  if(VIEW==='c'&&SID&&BID&&CID){initChaperone();return;}
+  if(VIEW==='d'&&SID){initDashboard();return;}
+  // Teacher view — requires auth
+  initAuth();
 });
 
 // ═══════════════════════════════════════════════
@@ -256,6 +269,65 @@ let activeTab='students';
 
 const loadS=()=>{try{const d=localStorage.getItem('ftr_v2');if(d){const p=JSON.parse(d);S={...S,...p};if(!S.baseUrl)S.baseUrl=autoBase();}}catch(e){}};
 const saveS=()=>localStorage.setItem('ftr_v2',JSON.stringify(S));
+
+// ═══════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════
+let currentUser=null;
+
+function initAuth(){
+  setRoot('<div style="text-align:center;padding:100px 32px;color:var(--muted)">Loading…</div>');
+  firebase.auth().onAuthStateChanged(user=>{
+    currentUser=user;
+    if(user) initSetup();
+    else renderSignIn();
+  });
+}
+
+function renderSignIn(){
+  setRoot(`
+    <div class="landing">
+      <div style="font-size:.65rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:8px">The Calculated Classroom</div>
+      <div style="font-size:2rem;margin-bottom:10px">🚌</div>
+      <h2 style="margin-bottom:8px;color:var(--blue-dk)">Field Trip Manager</h2>
+      <p class="hint" style="margin-bottom:28px">Sign in to manage your trips, roster, and live check-in dashboard.</p>
+      <button class="btn-google" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Sign in with Google
+      </button>
+    </div>
+  `);
+}
+
+function signInWithGoogle(){
+  const provider=new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider).catch(err=>{
+    alert('Sign-in failed: '+err.message);
+  });
+}
+
+function signOut(){
+  if(!confirm('Sign out of Field Trip Manager?'))return;
+  firebase.auth().signOut();
+}
+
+// Save trip metadata to Firebase under user's account
+function saveTripToAccount(sessionId,name){
+  if(!currentUser||!fbReady())return;
+  firebase.database().ref(`users/${currentUser.uid}/trips/${sessionId}`).set({
+    name,sessionId,created:Date.now()
+  });
+}
+
+// Load all trips for current user from Firebase
+function loadUserTrips(cb){
+  if(!currentUser||!fbReady()){cb([]);return;}
+  firebase.database().ref(`users/${currentUser.uid}/trips`).once('value',snap=>{
+    const data=snap.val()||{};
+    const trips=Object.values(data).sort((a,b)=>(b.created||0)-(a.created||0));
+    cb(trips);
+  });
+}
 
 // ═══════════════════════════════════════════════
 // COMPUTED GROUPS (flat state -> hierarchical)
@@ -355,8 +427,10 @@ function renderShell(){
         </div>
         ${S.tripName?`<span class="trip-name-pill">${esc(S.tripName)}</span>`:''}
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="topbar-btn" onclick="newTrip()">New Trip</button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${currentUser?.photoURL?`<img src="${currentUser.photoURL}" class="user-avatar">`:''}
+        <button class="topbar-btn" onclick="renderShell()" title="My trips">My Trips</button>
+        <button class="topbar-btn" onclick="newTrip()">+ New</button>
         <button class="topbar-btn-amber" onclick="goDash()">Live Dashboard →</button>
       </div>
     </div>
@@ -725,14 +799,49 @@ function renderActiveTab(){
 }
 
 function renderLanding(){
-  setRoot(`<div class="landing">
-    <div style="font-size:.65rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:6px">The Calculated Classroom</div>
-    <div style="font-size:2rem;margin-bottom:8px">🚌</div>
-    <h2 style="margin-bottom:8px;color:var(--blue-dk)">Field Trip Manager</h2>
-    <p class="hint" style="margin-bottom:28px">Manage students & chaperones, group them by bus, and share live check-in links with your team.</p>
-    <input type="text" id="tname" style="margin-bottom:12px" placeholder="Trip name (e.g. Universal Studios 2026)">
-    <button class="btn btn-primary btn-lg" onclick="createSession()">Create Trip</button>
-  </div>`);
+  loadUserTrips(trips=>{
+    const tripListHtml=trips.length
+      ?trips.map(t=>{
+        const d=t.created?new Date(t.created).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}):'';
+        const isCurrent=S.sessionId===t.sessionId;
+        return`<div class="trip-card" onclick="openTrip('${t.sessionId}','${esc(t.name)}')">
+          <span style="font-size:1.3rem">🚌</span>
+          <div style="flex:1;min-width:0">
+            <div class="trip-card-name">${esc(t.name)}</div>
+            <div class="trip-card-date">${d}${isCurrent?' · <strong style="color:var(--green)">Active</strong>':''}</div>
+          </div>
+          <span style="font-size:.75rem;color:var(--muted)">Open →</span>
+        </div>`;
+      }).join('')
+      :'<p class="hint" style="text-align:center;padding:16px 0">No trips yet — create your first one above.</p>';
+
+    const topbarHtml=`<div class="topbar">
+      <div class="brand-block">
+        <span class="brand-sub">The Calculated Classroom</span>
+        <span class="app-brand">Field Trip Manager</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        ${currentUser?.photoURL?`<img src="${currentUser.photoURL}" class="user-avatar">`:''}
+        <span class="user-name">${esc(currentUser?.displayName||currentUser?.email||'')}</span>
+        <button class="topbar-btn" onclick="signOut()">Sign out</button>
+      </div>
+    </div>`;
+
+    setRoot(`${topbarHtml}
+      <div class="trips-home">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-title">✨ New Trip</div>
+          <div class="input-row">
+            <input type="text" id="tname" placeholder="Trip name (e.g. Universal Studios 2026)">
+            <button class="btn btn-primary" onclick="createSession()">Create</button>
+          </div>
+        </div>
+        <div class="card-title" style="margin-bottom:10px">📋 My Trips</div>
+        ${tripListHtml}
+      </div>
+    `);
+    $('tname')?.addEventListener('keydown',e=>{if(e.key==='Enter')createSession();});
+  });
 }
 
 function createSession(){
@@ -740,11 +849,25 @@ function createSession(){
   if(!name){alert('Enter a trip name first.');return;}
   S.sessionId=sid();S.tripName=name;
   saveS();
+  saveTripToAccount(S.sessionId,name);
   try{renderShell();}catch(e){alert('Error loading app: '+e.message+'\n\nTry a hard refresh (Ctrl+Shift+R).');console.error(e);}
 }
 
+function openTrip(sessionId,name){
+  // If this trip matches what's in localStorage, just open it
+  if(S.sessionId===sessionId){renderShell();return;}
+  // Switch to this trip
+  loadS(); // reload current state
+  S.sessionId=sessionId;
+  S.tripName=name;
+  // Reset roster (roster data lives in localStorage per device)
+  S.students={};S.chaperones={};S.buses={};S.studentChap={};S.chapBus={};
+  S.sheetsLastSync='';
+  saveS();
+  renderShell();
+}
+
 function newTrip(){
-  if(!confirm('Start a new trip? This will clear all local setup data.'))return;
   S={sessionId:null,tripName:'',baseUrl:autoBase(),students:{},chaperones:{},buses:{},studentChap:{},chapBus:{},sheetsId:'',sheetsLastSync:''};
   saveS();renderShell();
 }
