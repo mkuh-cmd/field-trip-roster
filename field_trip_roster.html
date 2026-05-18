@@ -249,7 +249,7 @@ let S={
   buses:{},       // id -> {name}
   studentChap:{}, // studentId -> chaperoneId | ''
   chapBus:{},     // chaperoneId -> busId | ''
-  sheetsWebAppUrl:'',   // Google Apps Script web app URL
+  sheetsId:'',          // Google Sheet ID (parsed from URL)
   sheetsLastSync:'',    // last successful sync timestamp
 };
 let activeTab='students';
@@ -303,12 +303,24 @@ function renderShell(){
     <div class="sheets-banner">
       <div class="sheets-banner-icon">📊</div>
       <div class="sheets-banner-body">
-        <div class="sheets-banner-title" style="margin-bottom:4px">Google Sheets Sync ${syncBadge}</div>
-        <p class="hint" style="margin-bottom:10px">Pulls students, chaperones, and buses directly from your synced Google Sheet. Click to import the latest data.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <button class="btn btn-primary" id="import-btn" style="background:var(--teal)" onclick="importFromSheets()">⬇ Sync from Google Sheets</button>
-          ${S.sheetsLastSync?`<span class="hint">Last synced: ${S.sheetsLastSync}</span>`:''}
-        </div>
+        <div class="sheets-banner-title" style="margin-bottom:6px">Google Sheets Sync ${syncBadge}</div>
+        ${S.sheetsId
+          ?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-primary" id="import-btn" style="background:var(--teal)" onclick="importFromSheets()">⬇ Sync from Google Sheets</button>
+              ${S.sheetsLastSync?`<span class="hint">Last synced: ${S.sheetsLastSync}</span>`:''}
+              <button class="btn btn-sm" onclick="disconnectSheet()" style="margin-left:auto">Disconnect sheet</button>
+            </div>`
+          :`<p class="hint" style="margin-bottom:8px">Connect your Google Sheet to import students and chaperones automatically.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+              <input type="url" id="sheets-url-input" placeholder="Paste your Google Sheet URL here…" style="flex:1;min-width:220px">
+              <button class="btn btn-primary" style="background:var(--teal)" onclick="saveSheetUrl()">Connect</button>
+            </div>
+            <p class="hint" style="font-size:.78rem">
+              📋 Need a template?
+              <a href="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/copy" target="_blank" style="color:var(--teal)">Copy the Field Trip Manager template sheet →</a><br>
+              Your sheet needs a <strong>Students</strong> tab and optionally a <strong>Chaperones</strong> tab. Share the sheet as <em>"Anyone with the link can view"</em>.
+            </p>`
+        }
       </div>
     </div>
     <div class="sheets-banner" style="margin-top:8px">
@@ -407,7 +419,7 @@ function fetchTab(tabName){
       if(script.parentNode)script.parentNode.removeChild(script);
       reject(new Error(`Could not load "${tabName}". Check your internet connection.`));
     };
-    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=reqId:0;out:json;responseHandler:${cbName}&sheet=${encodeURIComponent(tabName)}`;
+    const url=`https://docs.google.com/spreadsheets/d/${S.sheetsId||SHEET_ID}/gviz/tq?tqx=reqId:0;out:json;responseHandler:${cbName}&sheet=${encodeURIComponent(tabName)}`;
     console.log('[Sheets] Loading tab:', tabName, url);
     script.src=url;
     document.head.appendChild(script);
@@ -415,6 +427,121 @@ function fetchTab(tabName){
 }
 
 async function importFromSheets(){
+  if(!S.sheetsId){alert('Paste your Google Sheet URL in the setup box above and click Save first.');return;}
+  const btn=$('import-btn');
+  if(btn){btn.textContent='Syncing…';btn.disabled=true;}
+
+  try{
+    // ── Fetch Students tab (required) and Chaperones tab (optional) ──
+    let studentsData, chaperonsData=null;
+    try{studentsData=await fetchTab('Students');}
+    catch(e){throw new Error('Could not find a tab named "Students" in your sheet.\n\nRename your student list tab to exactly: Students');}
+    try{chaperonsData=await fetchTab('Chaperones');}catch(e){/* optional */}
+
+    const findCol=(headers,...terms)=>{
+      for(const t of terms){const i=headers.findIndex(h=>String(h).toLowerCase().includes(t));if(i>=0)return i;}
+      return -1;
+    };
+
+    const stuH=(studentsData[0]||[]);
+    const sFirst=findCol(stuH,'first');
+    const sLast =findCol(stuH,'last');
+    const sName =findCol(stuH,'name');   // fallback single-name column
+    const sBus  =findCol(stuH,'bus');
+    const sChap =findCol(stuH,'chaperone','group leader','supervisor','teacher');
+
+    if(sFirst<0&&sLast<0&&sName<0)
+      throw new Error('Could not find name columns in your Students tab.\n\nAdd columns "First Name" and "Last Name" (or just "Name").');
+
+    const stuRows=studentsData.slice(1).filter(r=>r.some(c=>String(c||'').trim()));
+    const chapRows=chaperonsData?chaperonsData.slice(1).filter(r=>r.some(c=>String(c||'').trim())):[];
+
+    const hasExisting=Object.keys(S.students).length>0||Object.keys(S.chaperones).length>0;
+    if(hasExisting){
+      const ok=confirm(`Replace current roster with data from Google Sheets?\n\n  ${chapRows.length} chaperones found\n  ${stuRows.length} students found\n\nThis cannot be undone.`);
+      if(!ok){if(btn){btn.textContent='⬇ Sync from Google Sheets';btn.disabled=false;}return;}
+    }
+
+    S.students={};S.chaperones={};S.buses={};S.studentChap={};S.chapBus={};
+    const chapKeyMap={};  // lowercase key → appId
+    const busMap={};
+
+    // ── 1. Build chaperones from Chaperones tab ──
+    if(chaperonsData){
+      const cH=(chaperonsData[0]||[]);
+      const cFirst=findCol(cH,'first'); const cLast=findCol(cH,'last');
+      const cName=findCol(cH,'name');
+      const cEmail=findCol(cH,'email'); const cPhone=findCol(cH,'phone');
+      const cBus=findCol(cH,'bus');
+      chapRows.forEach(row=>{
+        let first='',last='',name='';
+        if(cFirst>=0)first=String(row[cFirst]||'').trim();
+        if(cLast>=0)last=String(row[cLast]||'').trim();
+        if(!first&&!last&&cName>=0){name=String(row[cName]||'').trim();const p=name.split(/\s+/);last=p.pop()||'';first=p.join(' ');}
+        else name=`${first} ${last}`.trim();
+        if(!name)return;
+        const key=name.toLowerCase();
+        if(chapKeyMap[key])return;
+        const id=uid();
+        S.chaperones[id]={name,firstName:first,lastName:last,
+          email:cEmail>=0?String(row[cEmail]||'').trim():'',
+          phone:cPhone>=0?String(row[cPhone]||'').trim():'',
+        };
+        chapKeyMap[key]=id;
+        chapKeyMap[last.toLowerCase()]=id;
+        if(cBus>=0){
+          const bn=String(row[cBus]||'').trim();
+          if(bn){if(!busMap[bn]){const bid=uid();S.buses[bid]={name:bn};busMap[bn]=bid;}S.chapBus[id]=busMap[bn];}
+        }
+      });
+    }
+
+    // ── 2. Build students from Students tab ──
+    stuRows.forEach(row=>{
+      let first='',last='',name='';
+      if(sFirst>=0)first=String(row[sFirst]||'').trim();
+      if(sLast>=0)last=String(row[sLast]||'').trim();
+      if(!first&&!last&&sName>=0){name=String(row[sName]||'').trim();const p=name.split(/\s+/);last=p.pop()||'';first=p.join(' ');}
+      else name=`${first} ${last}`.trim();
+      if(!name)return;
+      const id=uid();
+      S.students[id]={name};
+      if(sChap>=0){
+        const chapRaw=String(row[sChap]||'').trim();
+        if(chapRaw){
+          let chapId=chapKeyMap[chapRaw.toLowerCase()]||chapKeyMap[chapRaw.split(/\s+/).pop().toLowerCase()]||'';
+          if(!chapId){
+            const p=chapRaw.split(/\s+/);const cLast=p.pop()||'';const cFirst=p.join(' ');
+            const newId=uid();
+            S.chaperones[newId]={name:chapRaw,firstName:cFirst,lastName:cLast,email:'',phone:''};
+            chapKeyMap[chapRaw.toLowerCase()]=newId; chapKeyMap[cLast.toLowerCase()]=newId;
+            chapId=newId;
+          }
+          S.studentChap[id]=chapId;
+          if(sBus>=0&&!S.chapBus[chapId]){
+            const bn=String(row[sBus]||'').trim();
+            if(bn){if(!busMap[bn]){const bid=uid();S.buses[bid]={name:bn};busMap[bn]=bid;}S.chapBus[chapId]=busMap[bn];}
+          }
+        }
+      }
+    });
+
+    S.sheetsLastSync=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    saveS();
+    const stuCount=Object.keys(S.students).length,chapCount=Object.keys(S.chaperones).length,busCount=Object.keys(S.buses).length;
+    activeTab=chapCount>0?'groups':'students';
+    renderShell();
+    alert(`✅ Sync complete!\n\n  ${chapCount} chaperones\n  ${stuCount} students\n  ${busCount} buses\n\n`+(stuCount>0?'Review assignments in the Groups tab.':'No students found — check your sheet format.'));
+
+  }catch(err){
+    alert('Sync failed:\n\n'+err.message);
+  }finally{
+    if(btn){btn.textContent='⬇ Sync from Google Sheets';btn.disabled=false;}
+  }
+}
+
+// ── Legacy import (kept for backward compat) ──
+async function importFromSheetsLegacy(){
   const btn=$('import-btn');
   if(btn){btn.textContent='Syncing...';btn.disabled=true;}
 
@@ -572,6 +699,24 @@ async function importFromSheets(){
   }
 }
 
+function saveSheetUrl(){
+  const raw=($('sheets-url-input')?.value||'').trim();
+  if(!raw){alert('Paste your Google Sheet URL first.');return;}
+  // Extract sheet ID from URL like: https://docs.google.com/spreadsheets/d/SHEET_ID/edit...
+  const match=raw.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  const id=match?match[1]:raw; // fall back to treating as raw ID
+  if(!id||id.length<20){alert('That doesn\'t look like a valid Google Sheet URL.\n\nPaste the full URL from your browser\'s address bar.');return;}
+  S.sheetsId=id;
+  saveS();
+  renderShell();
+}
+
+function disconnectSheet(){
+  if(!confirm('Disconnect this Google Sheet? The current roster data will stay — only the connection will be removed.'))return;
+  S.sheetsId='';S.sheetsLastSync='';
+  saveS();renderShell();
+}
+
 function renderActiveTab(){
   if(activeTab==='students') renderStudentsTab();
   else if(activeTab==='chaperones') renderChaperonesTab();
@@ -600,7 +745,7 @@ function createSession(){
 
 function newTrip(){
   if(!confirm('Start a new trip? This will clear all local setup data.'))return;
-  S={sessionId:null,tripName:'',baseUrl:autoBase(),students:{},chaperones:{},buses:{},studentChap:{},chapBus:{},sheetsWebAppUrl:'',sheetsLastSync:''};
+  S={sessionId:null,tripName:'',baseUrl:autoBase(),students:{},chaperones:{},buses:{},studentChap:{},chapBus:{},sheetsId:'',sheetsLastSync:''};
   saveS();renderShell();
 }
 
