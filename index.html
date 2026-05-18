@@ -141,6 +141,27 @@ section{padding:80px 24px}
 .final-cta h2 span{color:var(--amber)}
 .final-cta p{font-size:1rem;color:rgba(255,255,255,.7);margin-bottom:36px;max-width:480px;margin-left:auto;margin-right:auto}
 
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:36px;max-width:440px;width:100%;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.25);animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.4rem;color:var(--muted);cursor:pointer;line-height:1;padding:4px}
+.modal-close:hover{color:var(--text)}
+.modal-badge{display:inline-flex;align-items:center;gap:6px;background:var(--amber-lt);border:1px solid rgba(245,158,11,.3);color:var(--amber-dk);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:100px;margin-bottom:16px}
+.modal h3{font-size:1.4rem;font-weight:800;color:var(--navy-dk);margin-bottom:8px;letter-spacing:-.02em}
+.modal p{font-size:.9rem;color:var(--muted);margin-bottom:24px;line-height:1.6}
+.modal-input{width:100%;padding:12px 14px;border:2px solid #e5e7eb;border-radius:9px;font-size:.95rem;outline:none;transition:border .15s;margin-bottom:12px}
+.modal-input:focus{border-color:var(--amber)}
+.modal-submit{width:100%;padding:13px;background:var(--amber);color:#fff;font-weight:700;font-size:.95rem;border:none;border-radius:9px;cursor:pointer;transition:opacity .15s}
+.modal-submit:hover{opacity:.88}
+.modal-note{font-size:.76rem;color:var(--muted);text-align:center;margin-top:10px}
+.modal-divider{margin:20px 0;border:none;border-top:1px solid #e5e7eb}
+.modal-alt-link{display:block;text-align:center;color:var(--navy);font-size:.85rem;font-weight:600;text-decoration:underline;cursor:pointer}
+
+/* ── NAV ACTIVE ── */
+.nav-link.active{color:#fff;background:rgba(255,255,255,.12)}
+
 /* ── FOOTER ── */
 footer{background:var(--navy-dk);border-top:1px solid rgba(255,255,255,.08);padding:40px 24px 24px}
 .footer-inner{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;margin-bottom:32px}
@@ -376,7 +397,7 @@ footer{background:var(--navy-dk);border-top:1px solid rgba(255,255,255,.08);padd
           <li>Trip history across devices</li>
           <li>Priority email support</li>
         </ul>
-        <a href="field_trip_roster.html" class="price-btn price-btn-primary">Start free trial</a>
+        <button onclick="openTrialModal()" class="price-btn price-btn-primary">Start free trial</button>
       </div>
 
       <div class="price-card">
@@ -391,7 +412,7 @@ footer{background:var(--navy-dk);border-top:1px solid rgba(255,255,255,.08);padd
           <li>Onboarding support</li>
           <li>Invoice available</li>
         </ul>
-        <a href="mailto:support@thecalculatedclassroom.com" class="price-btn price-btn-ghost">Contact us</a>
+        <a href="mailto:support@thecalculatedclassroom.com?subject=Field%20Trip%20Manager%20%E2%80%94%20School%20Plan%20Inquiry&body=Hi%2C%0A%0AI%27m%20interested%20in%20the%20School%20Plan%20for%20Field%20Trip%20Manager.%20Here%27s%20a%20bit%20about%20my%20school%3A%0A%0ASchool%20name%3A%0ANumber%20of%20teachers%3A%0ATypical%20trips%20per%20year%3A%0A%0AThanks!" class="price-btn price-btn-ghost">Contact us</a>
       </div>
 
     </div>
@@ -447,5 +468,71 @@ footer{background:var(--navy-dk);border-top:1px solid rgba(255,255,255,.08);padd
   </div>
 </footer>
 
+<!-- TRIAL MODAL -->
+<div class="modal-overlay" id="trial-modal" onclick="closeTrialModal(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button class="modal-close" onclick="closeTrialModal()" aria-label="Close">×</button>
+    <div class="modal-badge">🚀 Teacher Plan</div>
+    <h3 id="modal-title">Join the waitlist</h3>
+    <p>Paid plans are coming very soon. Drop your email and you'll be the first to know — plus get a discount for being an early supporter.</p>
+    <input id="waitlist-email" class="modal-input" type="email" placeholder="your@school.edu" autocomplete="email">
+    <button class="modal-submit" onclick="submitWaitlist()">Notify me when it's ready</button>
+    <p class="modal-note">No spam. Just one email when the Teacher plan goes live.</p>
+    <hr class="modal-divider">
+    <p style="font-size:.82rem;color:var(--muted);text-align:center;margin-bottom:10px">Want full access right now?</p>
+    <a href="field_trip_roster.html" class="modal-alt-link">Use the free version → it has everything you need today</a>
+  </div>
+</div>
+
+<script>
+/* ── MODAL ── */
+function openTrialModal(){
+  const m=document.getElementById('trial-modal');
+  m.classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>document.getElementById('waitlist-email').focus(),250);
+}
+function closeTrialModal(e){
+  if(e&&e.target!==document.getElementById('trial-modal'))return;
+  document.getElementById('trial-modal').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeTrialModal();});
+function submitWaitlist(){
+  const email=(document.getElementById('waitlist-email').value||'').trim();
+  if(!email||!email.includes('@')){
+    document.getElementById('waitlist-email').focus();
+    document.getElementById('waitlist-email').style.borderColor='#dc2626';
+    setTimeout(()=>document.getElementById('waitlist-email').style.borderColor='',1500);
+    return;
+  }
+  const subject=encodeURIComponent('Field Trip Manager — Waitlist');
+  const body=encodeURIComponent(`Hi,\n\nPlease add me to the waitlist for the Teacher plan.\n\nEmail: ${email}\n\nThanks!`);
+  window.location.href=`mailto:support@thecalculatedclassroom.com?subject=${subject}&body=${body}`;
+  // Show confirmation state
+  const btn=document.querySelector('.modal-submit');
+  btn.textContent='✓ Email opened — send it to get on the list!';
+  btn.style.background='var(--green)';
+}
+
+/* ── NAV SCROLL HIGHLIGHT ── */
+(function(){
+  const sections=document.querySelectorAll('section[id]');
+  const navLinks=document.querySelectorAll('.nav-link[href^="#"]');
+  if(!sections.length||!navLinks.length)return;
+
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        navLinks.forEach(l=>l.classList.remove('active'));
+        const active=document.querySelector(`.nav-link[href="#${entry.target.id}"]`);
+        if(active)active.classList.add('active');
+      }
+    });
+  },{rootMargin:'-40% 0px -55% 0px'});
+
+  sections.forEach(s=>obs.observe(s));
+})();
+</script>
 </body>
 </html>
