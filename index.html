@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Trip Manager — Always know every student is safe | The Calculated Classroom</title>
+<meta name="description" content="Real-time field trip check-in for K–12 schools. QR codes for every chaperone, live dashboard, Google Sheets sync. Built by a teacher, for teachers.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1e3a5f;--navy-dk:#12263f;--navy-lt:#e8edf5;
+  --amber:#f59e0b;--amber-dk:#c47f0a;--amber-lt:#fef3c7;
+  --green:#16a34a;--green-lt:#dcfce7;
+  --text:#111827;--muted:#6b7280;--radius:12px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);background:#fff;font-size:16px;line-height:1.6}
+a{color:inherit;text-decoration:none}
+img{max-width:100%}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:100;background:var(--navy-dk);border-bottom:3px solid var(--amber);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.nav-brand{display:flex;flex-direction:column;line-height:1.2}
+.nav-brand-sub{font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+.nav-brand-name{font-size:.95rem;font-weight:700;color:#fff}
+.nav-links{display:flex;align-items:center;gap:8px}
+.nav-link{color:rgba(255,255,255,.75);font-size:.85rem;padding:6px 12px;border-radius:7px;transition:all .15s}
+.nav-link:hover{color:#fff;background:rgba(255,255,255,.1)}
+.nav-cta{background:var(--amber);color:#fff;font-weight:700;font-size:.85rem;padding:8px 18px;border-radius:8px;transition:opacity .15s}
+.nav-cta:hover{opacity:.88}
+@media(max-width:520px){.nav-link{display:none}}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(160deg,var(--navy-dk) 0%,var(--navy) 60%,#1a4a7a 100%);color:#fff;padding:80px 24px 0;text-align:center;overflow:hidden;position:relative}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--amber);font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 14px;border-radius:100px;margin-bottom:24px}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;line-height:1.15;margin-bottom:20px;letter-spacing:-.02em}
+.hero h1 span{color:var(--amber)}
+.hero-sub{font-size:clamp(1rem,2.5vw,1.2rem);color:rgba(255,255,255,.75);max-width:580px;margin:0 auto 36px;line-height:1.6}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:56px}
+.btn-primary{background:var(--amber);color:#fff;font-weight:700;font-size:1rem;padding:14px 28px;border-radius:10px;border:none;cursor:pointer;transition:opacity .15s;display:inline-block}
+.btn-primary:hover{opacity:.88}
+.btn-ghost{background:rgba(255,255,255,.1);color:#fff;font-weight:600;font-size:1rem;padding:14px 28px;border-radius:10px;border:1px solid rgba(255,255,255,.25);cursor:pointer;transition:all .15s;display:inline-block}
+.btn-ghost:hover{background:rgba(255,255,255,.18)}
+
+/* ── MOCK DASHBOARD ── */
+.hero-visual{max-width:820px;margin:0 auto;position:relative}
+.mock-browser{background:#1a2744;border-radius:12px 12px 0 0;border:1px solid rgba(255,255,255,.1);border-bottom:none;overflow:hidden;box-shadow:0 -8px 60px rgba(0,0,0,.4)}
+.mock-browser-bar{background:#0f1a2e;padding:10px 16px;display:flex;align-items:center;gap:8px}
+.mock-dot{width:10px;height:10px;border-radius:50%}
+.mock-url{background:rgba(255,255,255,.08);border-radius:5px;flex:1;height:24px;margin-left:8px;display:flex;align-items:center;padding:0 10px}
+.mock-url span{color:rgba(255,255,255,.4);font-size:.7rem;font-family:monospace}
+.mock-screen{background:#f1f5f9;padding:16px}
+.mock-topbar{background:#12263f;border-bottom:3px solid #f59e0b;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:8px 8px 0 0}
+.mock-brand{display:flex;flex-direction:column}
+.mock-brand-sub{font-size:.5rem;color:#f59e0b;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.mock-brand-name{font-size:.75rem;color:#fff;font-weight:700}
+.mock-live{display:flex;align-items:center;gap:5px;font-size:.65rem;color:#f59e0b;font-weight:700}
+.mock-live-dot{width:6px;height:6px;border-radius:50%;background:#f59e0b;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.mock-stats{display:flex;gap:0;background:#fff;border:1px solid #e5e7eb;border-top:none;padding:12px 16px;gap:20px}
+.mock-stat{display:flex;flex-direction:column;align-items:center}
+.mock-stat-num{font-size:1.4rem;font-weight:700}
+.mock-stat-lbl{font-size:.55rem;text-transform:uppercase;letter-spacing:.08em;color:#6b7280}
+.mock-buses{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.mock-bus{background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb}
+.mock-bus-hdr{background:#1e3a5f;color:#fff;padding:6px 10px;font-size:.65rem;font-weight:700}
+.mock-chap{padding:6px 10px;border-top:1px solid #f3f4f6}
+.mock-chap-name{font-size:.6rem;font-weight:700;color:#374151;margin-bottom:4px}
+.mock-chips{display:flex;flex-wrap:wrap;gap:3px}
+.mock-chip{font-size:.5rem;padding:2px 5px;border-radius:100px;font-weight:600}
+.chip-p{background:#dcfce7;color:#16a34a}
+.chip-a{background:#fee2e2;color:#dc2626}
+.chip-n{background:#f3f4f6;color:#6b7280}
+
+/* ── SECTIONS ── */
+section{padding:80px 24px}
+.container{max-width:1040px;margin:0 auto}
+.section-label{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber-dk);margin-bottom:10px}
+.section-title{font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:800;color:var(--navy-dk);line-height:1.2;margin-bottom:16px;letter-spacing:-.02em}
+.section-sub{font-size:1rem;color:var(--muted);max-width:560px;line-height:1.6}
+
+/* ── PAIN POINTS ── */
+.pain{background:#fff}
+.pain-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:48px}
+.pain-card{background:var(--navy-lt);border-radius:var(--radius);padding:28px;border-left:4px solid var(--amber)}
+.pain-icon{font-size:1.8rem;margin-bottom:12px}
+.pain-title{font-weight:700;font-size:1rem;color:var(--navy-dk);margin-bottom:8px}
+.pain-desc{font-size:.88rem;color:var(--muted);line-height:1.6}
+
+/* ── HOW IT WORKS ── */
+.how{background:var(--navy-lt)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px;margin-top:48px;counter-reset:step}
+.step{position:relative;padding-left:56px;counter-increment:step}
+.step::before{content:counter(step);position:absolute;left:0;top:0;width:40px;height:40px;background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem}
+.step-title{font-weight:700;font-size:1rem;color:var(--navy-dk);margin-bottom:8px}
+.step-desc{font-size:.88rem;color:var(--muted);line-height:1.6}
+
+/* ── FEATURES ── */
+.features{background:#fff}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:48px}
+.feature-card{background:#fff;border:1px solid #e5e7eb;border-radius:var(--radius);padding:24px;transition:box-shadow .2s,transform .2s}
+.feature-card:hover{box-shadow:0 8px 30px rgba(30,58,95,.1);transform:translateY(-2px)}
+.feature-icon{font-size:1.6rem;margin-bottom:12px}
+.feature-title{font-weight:700;font-size:.95rem;color:var(--navy-dk);margin-bottom:6px}
+.feature-desc{font-size:.85rem;color:var(--muted);line-height:1.6}
+
+/* ── TESTIMONIAL ── */
+.testimonial{background:var(--navy);color:#fff;text-align:center;padding:80px 24px}
+.quote-mark{font-size:4rem;color:var(--amber);line-height:1;margin-bottom:16px;font-family:Georgia,serif}
+.quote-text{font-size:clamp(1.1rem,2.5vw,1.4rem);line-height:1.7;max-width:680px;margin:0 auto 28px;font-style:italic;color:rgba(255,255,255,.9)}
+.quote-author{font-size:.88rem;color:rgba(255,255,255,.6)}
+.quote-author strong{color:var(--amber);display:block;font-size:.95rem;margin-bottom:2px}
+
+/* ── PRICING ── */
+.pricing{background:var(--navy-lt)}
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;margin-top:48px;align-items:start}
+.price-card{background:#fff;border:2px solid #e5e7eb;border-radius:var(--radius);padding:32px;position:relative;transition:box-shadow .2s}
+.price-card:hover{box-shadow:0 8px 30px rgba(30,58,95,.12)}
+.price-card.featured{border-color:var(--amber);box-shadow:0 8px 30px rgba(245,158,11,.2)}
+.price-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--amber);color:#fff;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 14px;border-radius:100px;white-space:nowrap}
+.price-plan{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.price-amount{font-size:2.4rem;font-weight:800;color:var(--navy-dk);line-height:1;margin-bottom:4px}
+.price-amount span{font-size:1rem;font-weight:400;color:var(--muted)}
+.price-period{font-size:.82rem;color:var(--muted);margin-bottom:20px}
+.price-features{list-style:none;margin-bottom:28px}
+.price-features li{font-size:.88rem;color:#374151;padding:6px 0;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:8px}
+.price-features li::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0}
+.price-features li.no::before{content:'—';color:#d1d5db}
+.price-features li.no{color:#9ca3af}
+.price-btn{display:block;width:100%;text-align:center;padding:12px;border-radius:9px;font-weight:700;font-size:.9rem;transition:all .15s;cursor:pointer;border:none}
+.price-btn-primary{background:var(--amber);color:#fff}
+.price-btn-primary:hover{opacity:.88}
+.price-btn-ghost{background:var(--navy-lt);color:var(--navy)}
+.price-btn-ghost:hover{background:#dce4f0}
+
+/* ── FINAL CTA ── */
+.final-cta{background:var(--navy-dk);color:#fff;text-align:center;padding:80px 24px;position:relative;overflow:hidden}
+.final-cta::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.final-cta h2{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;margin-bottom:16px;letter-spacing:-.02em}
+.final-cta h2 span{color:var(--amber)}
+.final-cta p{font-size:1rem;color:rgba(255,255,255,.7);margin-bottom:36px;max-width:480px;margin-left:auto;margin-right:auto}
+
+/* ── FOOTER ── */
+footer{background:var(--navy-dk);border-top:1px solid rgba(255,255,255,.08);padding:40px 24px 24px}
+.footer-inner{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px;margin-bottom:32px}
+@media(max-width:680px){.footer-inner{grid-template-columns:1fr 1fr}.footer-brand-col{grid-column:1/-1}}
+.footer-brand{font-size:1rem;font-weight:700;color:#fff;margin-bottom:4px}
+.footer-tagline{font-size:.78rem;color:rgba(255,255,255,.45);line-height:1.5}
+.footer-col-title{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:12px}
+.footer-links{list-style:none;display:flex;flex-direction:column;gap:8px}
+.footer-links a{color:rgba(255,255,255,.6);font-size:.82rem;transition:color .15s}
+.footer-links a:hover{color:#fff}
+.footer-bottom{max-width:1040px;margin:0 auto;border-top:1px solid rgba(255,255,255,.08);padding-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.footer-copy{font-size:.74rem;color:rgba(255,255,255,.35)}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <span class="nav-brand-sub">The Calculated Classroom</span>
+    <span class="nav-brand-name">Field Trip Manager</span>
+  </div>
+  <div class="nav-links">
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#pricing" class="nav-link">Pricing</a>
+    <a href="#how-it-works" class="nav-link">How It Works</a>
+    <a href="field_trip_roster.html" class="nav-cta">Start Free →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">🚌 Built by a teacher, for teachers</div>
+  <h1>Always know every<br><span>student is safe</span></h1>
+  <p class="hero-sub">Real-time check-in for field trips. QR codes for every chaperone. Live dashboard that shows every student across every bus — from your phone.</p>
+  <div class="hero-btns">
+    <a href="field_trip_roster.html" class="btn-primary">Start for Free →</a>
+    <a href="#how-it-works" class="btn-ghost">See How It Works</a>
+  </div>
+
+  <!-- Mock Dashboard -->
+  <div class="hero-visual">
+    <div class="mock-browser">
+      <div class="mock-browser-bar">
+        <div class="mock-dot" style="background:#ff5f57"></div>
+        <div class="mock-dot" style="background:#ffbd2e"></div>
+        <div class="mock-dot" style="background:#28c840"></div>
+        <div class="mock-url"><span>fieldtripmanager.app · Live Dashboard</span></div>
+      </div>
+      <div class="mock-screen">
+        <div class="mock-topbar">
+          <div class="mock-brand">
+            <span class="mock-brand-sub">The Calculated Classroom</span>
+            <span class="mock-brand-name">Universal Studios 2026</span>
+          </div>
+          <div class="mock-live"><span class="mock-live-dot"></span> Live</div>
+        </div>
+        <div class="mock-stats">
+          <div class="mock-stat"><span class="mock-stat-num" style="color:#111">157</span><span class="mock-stat-lbl">Total</span></div>
+          <div class="mock-stat"><span class="mock-stat-num" style="color:#16a34a">143</span><span class="mock-stat-lbl">Present</span></div>
+          <div class="mock-stat"><span class="mock-stat-num" style="color:#dc2626">8</span><span class="mock-stat-lbl">Absent</span></div>
+          <div class="mock-stat"><span class="mock-stat-num" style="color:#6b7280">6</span><span class="mock-stat-lbl">Unmarked</span></div>
+          <div class="mock-stat"><span class="mock-stat-num" style="color:#1d4ed8">4</span><span class="mock-stat-lbl">Buses</span></div>
+        </div>
+        <div class="mock-buses">
+          <div class="mock-bus">
+            <div class="mock-bus-hdr">🚌 Bus 1 — 3 chaperones</div>
+            <div class="mock-chap">
+              <div class="mock-chap-name">Sarah Bedoya · 12 students</div>
+              <div class="mock-chips">
+                <span class="mock-chip chip-p">Emma R.</span>
+                <span class="mock-chip chip-p">James L.</span>
+                <span class="mock-chip chip-p">Sofia M.</span>
+                <span class="mock-chip chip-a">Tyler B.</span>
+                <span class="mock-chip chip-p">Aiden K.</span>
+                <span class="mock-chip chip-n">Maya T.</span>
+              </div>
+            </div>
+          </div>
+          <div class="mock-bus">
+            <div class="mock-bus-hdr">🚌 Bus 2 — 3 chaperones</div>
+            <div class="mock-chap">
+              <div class="mock-chap-name">Kenneth Heise · 11 students</div>
+              <div class="mock-chips">
+                <span class="mock-chip chip-p">Olivia P.</span>
+                <span class="mock-chip chip-p">Noah W.</span>
+                <span class="mock-chip chip-p">Ava C.</span>
+                <span class="mock-chip chip-p">Liam H.</span>
+                <span class="mock-chip chip-p">Mia G.</span>
+                <span class="mock-chip chip-n">Ethan S.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PAIN POINTS -->
+<section class="pain" id="pain">
+  <div class="container">
+    <div class="section-label">Sound familiar?</div>
+    <h2 class="section-title">Field trips shouldn't feel<br>this stressful</h2>
+    <p class="section-sub">Every teacher knows the anxiety. Here's what Field Trip Manager solves.</p>
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="pain-icon">📋</div>
+        <div class="pain-title">Paper rosters get lost in the chaos</div>
+        <div class="pain-desc">Wet clipboards, torn printouts, and illegible handwriting. By the time you've counted heads, the bus is ready to leave without you.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">😰</div>
+        <div class="pain-title">No real-time visibility across buses</div>
+        <div class="pain-desc">Chaperones are on 4 different buses and you have no idea who's been checked in until they call or text you — if they remember.</div>
+      </div>
+      <div class="pain-card">
+        <div class="pain-icon">🔄</div>
+        <div class="pain-title">Last-minute changes break everything</div>
+        <div class="pain-desc">A student gets added the morning of the trip. Now you're reprinting rosters, texting chaperones, and hoping nobody gets left behind.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how-it-works">
+  <div class="container">
+    <div class="section-label">Simple by design</div>
+    <h2 class="section-title">Set up in minutes.<br>Run your trip with confidence.</h2>
+    <p class="section-sub">Three steps and you're ready for check-in day.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-title">Import your roster</div>
+        <div class="step-desc">Paste your Google Sheet URL and your student and chaperone lists import automatically. Or add names manually — takes about 2 minutes.</div>
+      </div>
+      <div class="step">
+        <div class="step-title">Generate QR cards</div>
+        <div class="step-desc">One click generates a QR code for every chaperone. Print them or share digitally. Each card is pre-loaded with that chaperone's exact student list.</div>
+      </div>
+      <div class="step">
+        <div class="step-title">Watch it happen live</div>
+        <div class="step-desc">Chaperones tap Present or Absent on their phones. Your dashboard updates instantly. You see every student across every bus in one view.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-label">Everything you need</div>
+    <h2 class="section-title">Built for how field trips<br>actually work</h2>
+    <p class="section-sub">Every feature was designed by someone who has stood on a curb counting heads.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">QR codes for every chaperone</div>
+        <div class="feature-desc">Each chaperone scans one QR code and gets their personal roster, ready to check in. No app download, no login required.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Live dashboard</div>
+        <div class="feature-desc">See every student across every bus simultaneously. Updates in real time as chaperones check in students — from any device.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📋</div>
+        <div class="feature-title">Google Sheets sync</div>
+        <div class="feature-desc">Connect your existing Google Sheet and import students and chaperones in one click. No re-typing. No copy-paste errors.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <div class="feature-title">Two check-in phases</div>
+        <div class="feature-desc">Boarding check and End-of-Night check. Two separate moments of accountability so no student gets missed getting on or off the bus.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✏️</div>
+        <div class="feature-title">Last-minute edits</div>
+        <div class="feature-desc">Add, remove, or rename students right up to departure. Only the affected chaperone's QR code changes — everyone else's stays the same.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖨️</div>
+        <div class="feature-title">Print-ready chaperone cards</div>
+        <div class="feature-desc">One click generates a printable PDF with every chaperone's QR code, student list, and bus assignment. Professional and practical.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section class="testimonial">
+  <div class="quote-mark">"</div>
+  <p class="quote-text">We used this for our Universal Studios field trip — 157 students, 27 chaperones, 4 buses. I could see every student's status from my phone in real time. It completely changed how I run field trips.</p>
+  <div class="quote-author">
+    <strong>Middle School Math Teacher</strong>
+    Florida · 2026
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="container" style="text-align:center">
+    <div class="section-label">Simple pricing</div>
+    <h2 class="section-title">Start free. Upgrade when you're ready.</h2>
+    <p class="section-sub" style="margin:0 auto">No credit card required to start. Cancel anytime.</p>
+    <div class="pricing-grid" style="margin-top:48px;text-align:left">
+
+      <div class="price-card">
+        <div class="price-plan">Free</div>
+        <div class="price-amount">$0</div>
+        <div class="price-period">forever</div>
+        <ul class="price-features">
+          <li>2 trips per year</li>
+          <li>Up to 30 students per trip</li>
+          <li>QR codes & live dashboard</li>
+          <li>Google Sheets sync</li>
+          <li class="no">Trip history across devices</li>
+          <li class="no">Unlimited trips</li>
+        </ul>
+        <a href="field_trip_roster.html" class="price-btn price-btn-ghost">Get started free</a>
+      </div>
+
+      <div class="price-card featured">
+        <div class="price-badge">Most Popular</div>
+        <div class="price-plan">Teacher</div>
+        <div class="price-amount">$29<span>/yr</span></div>
+        <div class="price-period">billed annually</div>
+        <ul class="price-features">
+          <li>Unlimited trips</li>
+          <li>Unlimited students</li>
+          <li>QR codes & live dashboard</li>
+          <li>Google Sheets sync</li>
+          <li>Trip history across devices</li>
+          <li>Priority email support</li>
+        </ul>
+        <a href="field_trip_roster.html" class="price-btn price-btn-primary">Start free trial</a>
+      </div>
+
+      <div class="price-card">
+        <div class="price-plan">School</div>
+        <div class="price-amount">$129<span>/yr</span></div>
+        <div class="price-period">up to 10 teachers</div>
+        <ul class="price-features">
+          <li>Everything in Teacher</li>
+          <li>Up to 10 teacher accounts</li>
+          <li>School-wide dashboard</li>
+          <li>Admin oversight view</li>
+          <li>Onboarding support</li>
+          <li>Invoice available</li>
+        </ul>
+        <a href="mailto:support@thecalculatedclassroom.com" class="price-btn price-btn-ghost">Contact us</a>
+      </div>
+
+    </div>
+    <p style="font-size:.82rem;color:var(--muted);margin-top:24px">All plans include a 14-day free trial of the Teacher plan. No credit card required.</p>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="container" style="position:relative;z-index:1">
+    <h2>Ready to run your next trip<br><span>with total confidence?</span></h2>
+    <p>Join teachers who've replaced their clipboards with a live dashboard. Free to start — no credit card needed.</p>
+    <a href="field_trip_roster.html" class="btn-primary" style="font-size:1.05rem;padding:16px 36px">Start for Free →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand-col">
+      <div style="font-size:.58rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:4px">The Calculated Classroom</div>
+      <div class="footer-brand">Field Trip Manager</div>
+      <div class="footer-tagline" style="margin-top:6px">Making every field trip safer and simpler — built by a teacher who lived the problem.</div>
+    </div>
+    <div>
+      <div class="footer-col-title">Product</div>
+      <ul class="footer-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="field_trip_roster.html">Open App</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Resources</div>
+      <ul class="footer-links">
+        <li><a href="https://docs.google.com/spreadsheets/d/1pItymKmYSmLzU2j4dwEDThE5BCeXqLl55_94ps5BLwc/copy" target="_blank">Sheet Template</a></li>
+        <li><a href="mailto:support@thecalculatedclassroom.com">Contact Support</a></li>
+        <li><a href="https://www.teacherspayteachers.com" target="_blank">TPT Store</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Legal</div>
+      <ul class="footer-links">
+        <li><a href="privacy.html">Privacy Policy</a></li>
+        <li><a href="tos.html">Terms of Use</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 The Calculated Classroom. All rights reserved.</span>
+    <span class="footer-copy">Built for educators · Field Trip Manager</span>
+  </div>
+</footer>
+
+</body>
+</html>
