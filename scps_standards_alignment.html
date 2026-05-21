@@ -2248,7 +2248,7 @@ function renderList() {
 
 // ─── RENDER DETAIL ───────────────────────────────────────────────────────────
 function renderDetail(code) {
-  const all = DB[currentGrade] || [];
+  const all = currentGrade === 6 ? buildRamp6() : (DB[currentGrade] || []);
   const s = all.find(x => x.code === code);
   const panel = document.getElementById("detail-panel");
   if (!s) {
