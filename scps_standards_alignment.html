@@ -81,15 +81,45 @@
   }
   #search-box:focus { border-color: var(--fl); }
 
+  /* ── Teaching Flow dropdown ── */
+  .flow-dropdown { position: relative; }
+
   .flow-btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 6px 16px; border-radius: 20px;
     background: var(--fl); color: white;
     font-size: 14px; font-weight: 600;
-    text-decoration: none; border: 1.5px solid var(--fl);
-    white-space: nowrap; transition: opacity .15s;
+    cursor: pointer; border: 1.5px solid var(--fl);
+    white-space: nowrap; transition: opacity .15s; user-select: none;
   }
   .flow-btn:hover { opacity: 0.85; }
+  .flow-btn .caret { font-size: 10px; margin-left: 2px; }
+
+  .flow-menu {
+    display: none;
+    position: absolute; top: calc(100% + 6px); right: 0;
+    background: white; border: 1.5px solid var(--gray200);
+    border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    min-width: 220px; z-index: 100; overflow: hidden;
+  }
+  .flow-menu.open { display: block; }
+
+  .flow-menu-header {
+    padding: 8px 14px 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    color: var(--gray600); text-transform: uppercase;
+    border-bottom: 1px solid var(--gray200);
+  }
+  .flow-menu a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    font-size: 13px; font-weight: 500; color: var(--gray800);
+    text-decoration: none; transition: background .1s;
+  }
+  .flow-menu a:hover { background: var(--fl-light); color: var(--fl); }
+  .flow-menu a .menu-icon { font-size: 15px; }
+  .flow-menu a .menu-sub { font-size: 11px; color: var(--gray600); display: block; margin-top: 1px; }
+  .flow-menu a:not(:last-child) { border-bottom: 1px solid var(--gray200); }
 
   .layout {
     display: grid;
@@ -286,7 +316,16 @@
 <button class="quarter-btn" data-quarter="PM3">PM3</button>
   </div>
   <input id="search-box" type="search" placeholder="Search standards…">
-  <a href="7th_grade_teaching_flow.html" class="flow-btn">&#128202; 7th Grade Teaching Flow</a>
+  <div class="flow-dropdown">
+    <div class="flow-btn" id="flow-toggle">&#128202; Teaching Flow <span class="caret">&#9660;</span></div>
+    <div class="flow-menu" id="flow-menu">
+      <div class="flow-menu-header">Instructional Sequence</div>
+      <a href="7th_grade_teaching_flow.html">
+        <span class="menu-icon">&#128202;</span>
+        <span>7th Grade Teaching Flow<span class="menu-sub">Q1–Q4 sequence &amp; FAST test prep</span></span>
+      </a>
+    </div>
+  </div>
 </div>
 
 <div class="layout">
@@ -2031,6 +2070,19 @@ const DB = {
 ] // end Grade 8
 
 }; // end DB
+
+// ─── TEACHING FLOW DROPDOWN ──────────────────────────────────────────────────
+(function() {
+  const toggle = document.getElementById("flow-toggle");
+  const menu   = document.getElementById("flow-menu");
+  toggle.addEventListener("click", function(e) {
+    e.stopPropagation();
+    menu.classList.toggle("open");
+  });
+  document.addEventListener("click", function() {
+    menu.classList.remove("open");
+  });
+})();
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let currentGrade   = 6;
