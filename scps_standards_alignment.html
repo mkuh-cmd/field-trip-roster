@@ -9,6 +9,7 @@
     --q1: #1d6fa4; --q1-light: #e8f3fa;
     --q2: #2e7d32; --q2-light: #e8f5e9;
     --q3: #6a1b9a; --q3-light: #f3e5f5;
+    --q4: #b07d00; --q4-light: #fff8dc;
     --pm3: #e65100; --pm3-light: #fff3e0;
     --fl: #003087; --fl-light: #e8edf7;
     --nat: #b71c1c; --nat-light: #fde8e8;
@@ -69,6 +70,7 @@
   .quarter-btn[data-quarter="Q1"].active  { background: var(--q1); color: white; border-color: var(--q1); }
   .quarter-btn[data-quarter="Q2"].active  { background: var(--q2); color: white; border-color: var(--q2); }
   .quarter-btn[data-quarter="Q3"].active  { background: var(--q3); color: white; border-color: var(--q3); }
+  .quarter-btn[data-quarter="Q4"].active  { background: var(--q4);  color: white; border-color: var(--q4);  }
   .quarter-btn[data-quarter="PM3"].active { background: var(--pm3); color: white; border-color: var(--pm3); }
   .grade-btn:hover:not(.active), .quarter-btn:hover:not(.active) { border-color: #999; }
 
@@ -121,6 +123,7 @@
   .qtag-Q1  { background: var(--q1-light); color: var(--q1); }
   .qtag-Q2  { background: var(--q2-light); color: var(--q2); }
   .qtag-Q3  { background: var(--q3-light); color: var(--q3); }
+  .qtag-Q4  { background: var(--q4-light); color: var(--q4); }
   .qtag-PM3 { background: var(--pm3-light); color: var(--pm3); }
 
   /* RIGHT PANEL */
@@ -254,7 +257,7 @@
   <div class="header-divider"></div>
   <div>
     <h1>Math Standards Alignment Tool</h1>
-    <p>Grades 6–8 &nbsp;·&nbsp; Florida BEST Standards &nbsp;·&nbsp; Q1 · Q2 · Q3 · PM3 &nbsp;·&nbsp; <a href="7th_grade_teaching_flow.html" style="color:#90caf9;font-weight:600;">7th Grade Teaching Flow &#8599;</a></p>
+    <p>Grades 6–8 &nbsp;·&nbsp; Florida BEST Standards &nbsp;·&nbsp; Q1 · Q2 · Q3 · Q4 · PM3 &nbsp;·&nbsp; <a href="7th_grade_teaching_flow.html" style="color:#90caf9;font-weight:600;">7th Grade Teaching Flow &#8599;</a></p>
   </div>
 </header>
 
@@ -270,6 +273,7 @@
     <button class="quarter-btn active" data-quarter="Q1">Q1</button>
     <button class="quarter-btn" data-quarter="Q2">Q2</button>
     <button class="quarter-btn" data-quarter="Q3">Q3</button>
+    <button class="quarter-btn" data-quarter="Q4">Q4 – Test Prep</button>
     <button class="quarter-btn" data-quarter="PM3">PM3</button>
   </div>
   <input id="search-box" type="search" placeholder="Search standards…">
@@ -2027,7 +2031,9 @@ let searchQuery    = "";
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function getStandards() {
   const all = DB[currentGrade] || [];
-  const filtered = all.filter(s => s.quarters.includes(currentQuarter));
+  const filtered = currentQuarter === "Q4"
+    ? all.filter(s => s.quarters.includes("PM3"))  // Q4 = test prep review of all PM3 standards
+    : all.filter(s => s.quarters.includes(currentQuarter));
   if (!searchQuery) return filtered;
   const q = searchQuery.toLowerCase();
   return filtered.filter(s =>

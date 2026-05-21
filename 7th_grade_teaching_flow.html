@@ -9,6 +9,7 @@
       --q1: #1d6fa4; --q1-light: #e8f3fa;
       --q2: #2e7d32; --q2-light: #e8f5e9;
       --q3: #6a1b9a; --q3-light: #f3e5f5;
+      --q4: #b07d00; --q4-light: #fff8dc;
       --fl: #003087;
       --text: #1a1a1a; --muted: #666;
     }
@@ -471,6 +472,246 @@
   </div>
 
 </div><!-- end flow-grid -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     QUARTER 4 — TEST PREP SECTION
+══════════════════════════════════════════════════════════════ -->
+<style>
+  .q4-section {
+    margin: 0 28px 32px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid var(--q4);
+  }
+  .q4-header {
+    background: var(--q4);
+    color: white;
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .q4-header-text h2 { font-size: 1rem; font-weight: 800; letter-spacing: 0.06em; }
+  .q4-header-text p { font-size: 0.78rem; opacity: 0.88; margin-top: 3px; }
+  .q4-badge {
+    background: rgba(255,255,255,0.2);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    border-radius: 8px; padding: 6px 14px;
+    font-size: 0.85rem; font-weight: 800; white-space: nowrap;
+    letter-spacing: 0.04em;
+  }
+
+  .q4-body {
+    background: var(--q4-light);
+    padding: 20px 24px 24px;
+  }
+  .q4-intro {
+    font-size: 0.82rem; color: #555; line-height: 1.6; margin-bottom: 20px;
+    max-width: 900px;
+  }
+
+  .cluster-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 1100px) { .cluster-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 700px)  { .cluster-grid { grid-template-columns: 1fr; } }
+
+  .cluster-card {
+    background: white;
+    border-radius: 10px;
+    border: 1.5px solid #e0d090;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .cluster-header {
+    padding: 10px 13px;
+    font-size: 0.78rem; font-weight: 800;
+    letter-spacing: 0.04em; color: white;
+  }
+  .ch-nso { background: #bf360c; }
+  .ch-dp1 { background: #01579b; }
+  .ch-gr  { background: #1b5e20; }
+  .ch-dp2 { background: #4527a0; }
+  .ch-ar  { background: #4a148c; }
+
+  .cluster-week {
+    font-size: 0.68rem; font-weight: 500; opacity: 0.85;
+    margin-top: 1px; font-style: italic;
+  }
+
+  .cluster-body { padding: 11px 13px; flex: 1; display: flex; flex-direction: column; gap: 9px; }
+
+  .cluster-standards { display: flex; flex-direction: column; gap: 5px; }
+  .cs-chip {
+    display: flex; align-items: flex-start; gap: 7px;
+    font-size: 0.73rem;
+  }
+  .cs-code {
+    font-weight: 700; color: #444; white-space: nowrap;
+    min-width: 90px; font-size: 0.68rem; margin-top: 1px;
+  }
+  .cs-title { color: #555; line-height: 1.35; }
+
+  .cluster-focus {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: #fffde7;
+    border-left: 3px solid var(--q4);
+    border-radius: 0 5px 5px 0;
+    font-size: 0.72rem; color: #555; line-height: 1.45;
+  }
+  .cluster-focus strong { color: #7a5500; }
+
+  .cluster-tip {
+    margin-top: 7px;
+    font-size: 0.71rem; color: #777; line-height: 1.4;
+    font-style: italic;
+  }
+
+  .q4-footer-note {
+    margin-top: 18px;
+    padding: 12px 16px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e0d090;
+    font-size: 0.78rem; color: #555; line-height: 1.6;
+  }
+  .q4-footer-note strong { color: var(--q4); }
+</style>
+
+<div class="q4-section">
+  <div class="q4-header">
+    <div class="q4-badge">&#9733; QUARTER 4</div>
+    <div class="q4-header-text">
+      <h2>TEST PREP &amp; FAST PM3 REVIEW</h2>
+      <p>All 21 SCPS standards reviewed in five strategic clusters &nbsp;&middot;&nbsp; Spiraled practice toward mastery</p>
+    </div>
+  </div>
+  <div class="q4-body">
+    <p class="q4-intro">
+      Quarter 4 is not new content — it is a strategic, spiraled review of all Q1, Q2, and Q3 standards in preparation for the FAST PM3 assessment. Standards are grouped into five review clusters by conceptual strand, ordered to re-activate prior learning and connect skills across the year. Each cluster includes a focus priority and a common error alert for targeted re-teaching.
+    </p>
+
+    <div class="cluster-grid">
+
+      <!-- Cluster 1: Number Sense -->
+      <div class="cluster-card">
+        <div class="cluster-header ch-nso">
+          CLUSTER 1 &mdash; NUMBER SENSE
+          <div class="cluster-week">Weeks 1–2</div>
+        </div>
+        <div class="cluster-body">
+          <div class="cluster-standards">
+            <div class="cs-chip"><span class="cs-code">NSO.1.2</span><span class="cs-title">Multiply &amp; Divide Rationals</span></div>
+            <div class="cs-chip"><span class="cs-code">NSO.1.1</span><span class="cs-title">Add &amp; Subtract Rationals</span></div>
+            <div class="cs-chip"><span class="cs-code">NSO.2.2</span><span class="cs-title">Procedural Fluency</span></div>
+            <div class="cs-chip"><span class="cs-code">NSO.2.3</span><span class="cs-title">Real-World Problems</span></div>
+            <div class="cs-chip"><span class="cs-code">NSO.2.1</span><span class="cs-title">Multi-Step Rational Problems</span></div>
+          </div>
+          <div class="cluster-focus">
+            <strong>Focus:</strong> All four operations with integers, fractions, and decimals — including negative values. Fluency with sign rules.
+          </div>
+          <div class="cluster-tip">
+            &#9888; Common error: Sign mistakes when multiplying/dividing two negatives, and subtracting a negative (–(–x) = +x).
+          </div>
+        </div>
+      </div>
+
+      <!-- Cluster 2: Probability -->
+      <div class="cluster-card">
+        <div class="cluster-header ch-dp1">
+          CLUSTER 2 &mdash; PROBABILITY
+          <div class="cluster-week">Week 3</div>
+        </div>
+        <div class="cluster-body">
+          <div class="cluster-standards">
+            <div class="cs-chip"><span class="cs-code">DP.2.1</span><span class="cs-title">Sample Space</span></div>
+            <div class="cs-chip"><span class="cs-code">DP.2.2</span><span class="cs-title">Interpret &amp; Compare Probabilities</span></div>
+            <div class="cs-chip"><span class="cs-code">DP.2.3</span><span class="cs-title">Theoretical Probability</span></div>
+            <div class="cs-chip"><span class="cs-code">DP.2.4</span><span class="cs-title">Experimental Probability</span></div>
+          </div>
+          <div class="cluster-focus">
+            <strong>Focus:</strong> Connecting sample space to P = favorable/total; interpreting simulations; comparing experimental to theoretical probability.
+          </div>
+          <div class="cluster-tip">
+            &#9888; Common error: Forgetting P(complement) = 1 – P(event); confusing "more trials" with "guaranteed accuracy."
+          </div>
+        </div>
+      </div>
+
+      <!-- Cluster 3: Geometry -->
+      <div class="cluster-card">
+        <div class="cluster-header ch-gr">
+          CLUSTER 3 &mdash; GEOMETRY
+          <div class="cluster-week">Week 4</div>
+        </div>
+        <div class="cluster-body">
+          <div class="cluster-standards">
+            <div class="cs-chip"><span class="cs-code">GR.1.1</span><span class="cs-title">Angle Relationships</span></div>
+            <div class="cs-chip"><span class="cs-code">GR.1.3</span><span class="cs-title">Triangle Angle Sum</span></div>
+            <div class="cs-chip"><span class="cs-code">GR.1.4</span><span class="cs-title">Triangle Inequality</span></div>
+            <div class="cs-chip"><span class="cs-code">GR.1.5</span><span class="cs-title">Polygon Angle Sums</span></div>
+            <div class="cs-chip"><span class="cs-code">GR.1.2</span><span class="cs-title">Scale Drawings</span></div>
+          </div>
+          <div class="cluster-focus">
+            <strong>Focus:</strong> Equation-writing for angle problems; applying (n−2)×180° for polygons; setting up proportions for scale drawings.
+          </div>
+          <div class="cluster-tip">
+            &#9888; Common error: Applying the triangle angle sum to quadrilaterals; using the wrong formula for exterior angles.
+          </div>
+        </div>
+      </div>
+
+      <!-- Cluster 4: Data Analysis -->
+      <div class="cluster-card">
+        <div class="cluster-header ch-dp2">
+          CLUSTER 4 &mdash; DATA ANALYSIS
+          <div class="cluster-week">Week 5</div>
+        </div>
+        <div class="cluster-body">
+          <div class="cluster-standards">
+            <div class="cs-chip"><span class="cs-code">DP.1.3</span><span class="cs-title">Statistical Displays</span></div>
+            <div class="cs-chip"><span class="cs-code">DP.1.4</span><span class="cs-title">Select Appropriate Measures</span></div>
+          </div>
+          <div class="cluster-focus">
+            <strong>Focus:</strong> Choosing between mean, median, and mode for skewed data or outlier-heavy sets; justifying display selection (histogram vs. box plot vs. dot plot).
+          </div>
+          <div class="cluster-tip">
+            &#9888; Common error: Using the mean when an outlier is present (median is more appropriate); confusing range with IQR.
+          </div>
+        </div>
+      </div>
+
+      <!-- Cluster 5: Proportional Reasoning -->
+      <div class="cluster-card">
+        <div class="cluster-header ch-ar">
+          CLUSTER 5 &mdash; PROPORTIONAL REASONING
+          <div class="cluster-week">Weeks 6–7</div>
+        </div>
+        <div class="cluster-body">
+          <div class="cluster-standards">
+            <div class="cs-chip"><span class="cs-code">AR.1.1</span><span class="cs-title">Proportional Relationships</span></div>
+            <div class="cs-chip"><span class="cs-code">AR.1.2</span><span class="cs-title">Constant of Proportionality</span></div>
+            <div class="cs-chip"><span class="cs-code">AR.3.1</span><span class="cs-title">Percent Problems</span></div>
+            <div class="cs-chip"><span class="cs-code">AR.3.3</span><span class="cs-title">Percent Change</span></div>
+            <div class="cs-chip"><span class="cs-code">AR.4.5</span><span class="cs-title">Proportional vs. Non-Proportional</span></div>
+          </div>
+          <div class="cluster-focus">
+            <strong>Focus:</strong> Identifying k across representations; solving multi-step percent and financial problems; comparing proportional and non-proportional relationships.
+          </div>
+          <div class="cluster-tip">
+            &#9888; Common error: Confusing percent of a number with percent change; assuming every linear relationship is proportional.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end cluster-grid -->
+
+    <div class="q4-footer-note">
+      <strong>&#127919; FAST PM3 Strategy:</strong> The PM3 assessment is cumulative — it tests all 21 standards from Q1, Q2, and Q3. Use Cluster 1 first because rational number fluency (NSO) is embedded in every other cluster. End with Cluster 5 (Proportional Reasoning) because AR standards carry the highest weight and connect most directly to 8th grade readiness. Interleave mixed-review practice sets between clusters to build retrieval strength across strands.
+    </div>
+  </div>
+</div>
 
 <footer>
   <strong>&copy; 2025 The Calculated Classroom &nbsp;&middot;&nbsp; Axiomatic Field LLC.</strong>
