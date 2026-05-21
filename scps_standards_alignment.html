@@ -81,6 +81,16 @@
   }
   #search-box:focus { border-color: var(--fl); }
 
+  .flow-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px; border-radius: 20px;
+    background: var(--fl); color: white;
+    font-size: 14px; font-weight: 600;
+    text-decoration: none; border: 1.5px solid var(--fl);
+    white-space: nowrap; transition: opacity .15s;
+  }
+  .flow-btn:hover { opacity: 0.85; }
+
   .layout {
     display: grid;
     grid-template-columns: 340px 1fr;
@@ -257,7 +267,7 @@
   <div class="header-divider"></div>
   <div>
     <h1>Math Standards Alignment Tool</h1>
-    <p>Grades 6–8 &nbsp;·&nbsp; Florida BEST Standards &nbsp;·&nbsp; Q1 · Q2 · Q3 · Q4 · PM3 &nbsp;·&nbsp; <a href="7th_grade_teaching_flow.html" style="color:#90caf9;font-weight:600;">7th Grade Teaching Flow &#8599;</a></p>
+    <p>Grades 6–8 &nbsp;·&nbsp; Florida BEST Standards &nbsp;·&nbsp; Q1 · Q2 · Q3 · Q4 · PM3</p>
   </div>
 </header>
 
@@ -277,6 +287,7 @@
     <button class="quarter-btn" data-quarter="PM3">PM3</button>
   </div>
   <input id="search-box" type="search" placeholder="Search standards…">
+  <a href="7th_grade_teaching_flow.html" class="flow-btn">&#128202; 7th Grade Teaching Flow</a>
 </div>
 
 <div class="layout">
