@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCPS Math Standards Alignment · Grades 6–8</title>
+<style>
+  :root {
+    --q1: #1d6fa4; --q1-light: #e8f3fa;
+    --q2: #2e7d32; --q2-light: #e8f5e9;
+    --q3: #6a1b9a; --q3-light: #f3e5f5;
+    --pm3: #e65100; --pm3-light: #fff3e0;
+    --fl: #003087; --fl-light: #e8edf7;
+    --nat: #b71c1c; --nat-light: #fde8e8;
+    --tx: #bf360c; --tx-light: #fbe9e7;
+    --ca: #1a237e; --ca-light: #e8eaf6;
+    --gray50: #f9fafb; --gray100: #f3f4f6;
+    --gray200: #e5e7eb; --gray600: #4b5563; --gray800: #1f2937;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gray50); color: var(--gray800); }
+
+  header {
+    background: var(--fl);
+    color: white;
+    padding: 16px 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header-badge {
+    background: #FFB81C; color: #003087;
+    font-weight: 800; font-size: 13px;
+    padding: 4px 10px; border-radius: 4px; white-space: nowrap;
+  }
+  .header-brand {
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .brand-name {
+    font-size: 18px; font-weight: 800; letter-spacing: -.01em;
+    color: white; line-height: 1.1;
+  }
+  .brand-name span { color: #FFB81C; }
+  .brand-sub {
+    font-size: 11px; font-weight: 500; opacity: .7;
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .header-divider {
+    width: 1px; height: 36px; background: rgba(255,255,255,.25);
+    margin: 0 6px;
+  }
+  header h1 { font-size: 18px; font-weight: 700; }
+  header p { font-size: 13px; opacity: .8; margin-top: 2px; }
+
+  .controls {
+    background: white;
+    border-bottom: 1px solid var(--gray200);
+    padding: 12px 24px;
+    display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
+  }
+  .control-group { display: flex; gap: 6px; align-items: center; }
+  .control-label { font-size: 12px; font-weight: 600; color: var(--gray600); text-transform: uppercase; letter-spacing: .05em; margin-right: 4px; }
+
+  .grade-btn, .quarter-btn {
+    padding: 6px 16px; border-radius: 20px; border: 1.5px solid var(--gray200);
+    background: white; font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: all .15s;
+  }
+  .grade-btn.active { background: var(--fl); color: white; border-color: var(--fl); }
+  .quarter-btn[data-quarter="Q1"].active  { background: var(--q1); color: white; border-color: var(--q1); }
+  .quarter-btn[data-quarter="Q2"].active  { background: var(--q2); color: white; border-color: var(--q2); }
+  .quarter-btn[data-quarter="Q3"].active  { background: var(--q3); color: white; border-color: var(--q3); }
+  .quarter-btn[data-quarter="PM3"].active { background: var(--pm3); color: white; border-color: var(--pm3); }
+  .grade-btn:hover:not(.active), .quarter-btn:hover:not(.active) { border-color: #999; }
+
+  #search-box {
+    margin-left: auto;
+    padding: 6px 12px; border: 1.5px solid var(--gray200);
+    border-radius: 20px; font-size: 14px; width: 220px; outline: none;
+  }
+  #search-box:focus { border-color: var(--fl); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    height: calc(100vh - 110px);
+  }
+
+  /* LEFT PANEL */
+  .std-list-panel {
+    background: white;
+    border-right: 1px solid var(--gray200);
+    overflow-y: auto;
+  }
+  .std-list-header {
+    padding: 10px 16px;
+    background: var(--gray100);
+    border-bottom: 1px solid var(--gray200);
+    font-size: 12px; font-weight: 700; color: var(--gray600);
+    text-transform: uppercase; letter-spacing: .05em;
+    position: sticky; top: 0; z-index: 1;
+  }
+  .std-count { float: right; font-weight: 400; }
+
+  .std-item {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--gray100);
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .std-item:hover { background: var(--gray50); }
+  .std-item.selected { background: var(--fl-light); border-left: 3px solid var(--fl); }
+  .std-item .std-code {
+    font-size: 12px; font-weight: 700; color: var(--fl);
+    font-family: 'Courier New', monospace;
+  }
+  .std-item .std-title { font-size: 13px; color: var(--gray800); margin-top: 2px; line-height: 1.4; }
+  .std-item .std-qtag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 1px 6px; border-radius: 10px; margin-top: 4px;
+  }
+  .qtag-Q1  { background: var(--q1-light); color: var(--q1); }
+  .qtag-Q2  { background: var(--q2-light); color: var(--q2); }
+  .qtag-Q3  { background: var(--q3-light); color: var(--q3); }
+  .qtag-PM3 { background: var(--pm3-light); color: var(--pm3); }
+
+  /* RIGHT PANEL */
+  .detail-panel {
+    overflow-y: auto;
+    padding: 20px;
+    background: var(--gray50);
+  }
+  .empty-state {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; color: var(--gray600); text-align: center;
+  }
+  .empty-state svg { opacity: .25; margin-bottom: 16px; }
+  .empty-state h2 { font-size: 18px; font-weight: 600; }
+  .empty-state p { font-size: 14px; margin-top: 6px; }
+
+  .fl-card {
+    background: white;
+    border: 2px solid var(--fl);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .fl-card-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .flag-badge {
+    font-size: 11px; font-weight: 800; padding: 3px 10px;
+    border-radius: 4px; text-transform: uppercase; letter-spacing: .06em;
+    white-space: nowrap;
+  }
+  .badge-fl  { background: var(--fl); color: white; }
+  .badge-nat { background: var(--nat); color: white; }
+  .badge-tx  { background: var(--tx); color: white; }
+  .badge-ca  { background: var(--ca); color: white; }
+
+  .fl-card h2 { font-size: 14px; font-weight: 700; font-family: 'Courier New', monospace; color: var(--fl); }
+  .fl-card h3 { font-size: 16px; font-weight: 700; color: var(--gray800); margin-bottom: 6px; }
+  .fl-card p  { font-size: 14px; line-height: 1.6; color: var(--gray800); }
+
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+  .cmp-card {
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray200);
+    padding: 14px 16px;
+  }
+  .cmp-card.nat { border-top: 3px solid var(--nat); }
+  .cmp-card.tx  { border-top: 3px solid var(--tx); }
+  .cmp-card.ca  { border-top: 3px solid var(--ca); }
+
+  .cmp-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .cmp-code {
+    font-size: 12px; font-weight: 700; color: var(--gray600);
+    font-family: 'Courier New', monospace;
+    background: var(--gray100); padding: 2px 8px; border-radius: 4px;
+  }
+  .cmp-card h4  { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--gray800); }
+  .cmp-card p   { font-size: 13px; line-height: 1.6; color: var(--gray600); }
+  .alignment-note {
+    font-size: 11px; color: var(--gray600); background: var(--gray100);
+    border-radius: 4px; padding: 6px 10px; margin-top: 10px;
+    border-left: 3px solid var(--gray200);
+  }
+  .alignment-note strong { color: var(--gray800); }
+
+  .no-std { color: var(--gray600); font-style: italic; font-size: 13px; }
+
+  footer {
+    background: #001a4d;
+    color: rgba(255,255,255,.55);
+    font-size: 12px;
+    text-align: center;
+    padding: 10px 24px;
+    line-height: 1.6;
+    border-top: 2px solid #FFB81C;
+  }
+  footer strong { color: rgba(255,255,255,.85); }
+  footer a { color: #FFB81C; text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* Prerequisites */
+  .prereqs-section { margin-bottom: 16px; }
+  .prereqs-header {
+    font-size: 12px; font-weight: 700; color: var(--gray600);
+    text-transform: uppercase; letter-spacing: .05em;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+  }
+  .prereqs-header::after {
+    content: ""; flex: 1; height: 1px; background: var(--gray200);
+  }
+  .prereqs-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .prereq-chip {
+    background: white; border: 1px solid var(--gray200);
+    border-left: 3px solid #9e9e9e;
+    border-radius: 6px; padding: 8px 12px;
+    flex: 1 1 220px; max-width: 340px;
+    transition: box-shadow .15s;
+  }
+  .prereq-chip:hover { box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+  .prereq-chip .pc-grade {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: #6b7280; margin-bottom: 2px;
+  }
+  .prereq-chip .pc-code {
+    font-family: 'Courier New', monospace; font-size: 12px;
+    font-weight: 700; color: #374151; margin-bottom: 3px;
+  }
+  .prereq-chip .pc-desc { font-size: 12px; color: #4b5563; line-height: 1.4; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; grid-template-rows: 300px 1fr; }
+    .comparison-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">Florida</div>
+  <div class="header-brand">
+    <div class="brand-name">The <span>Calculated</span> Classroom</div>
+    <div class="brand-sub">by Axiomatic Field</div>
+  </div>
+  <div class="header-divider"></div>
+  <div>
+    <h1>Math Standards Alignment Tool</h1>
+    <p>Grades 6–8 &nbsp;·&nbsp; Florida BEST Standards &nbsp;·&nbsp; Q1 · Q2 · Q3 · PM3</p>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="control-group">
+    <span class="control-label">Grade</span>
+    <button class="grade-btn active" data-grade="6">Grade 6</button>
+    <button class="grade-btn" data-grade="7">Grade 7</button>
+    <button class="grade-btn" data-grade="8">Grade 8</button>
+  </div>
+  <div class="control-group">
+    <span class="control-label">Period</span>
+    <button class="quarter-btn active" data-quarter="Q1">Q1</button>
+    <button class="quarter-btn" data-quarter="Q2">Q2</button>
+    <button class="quarter-btn" data-quarter="Q3">Q3</button>
+    <button class="quarter-btn" data-quarter="PM3">PM3</button>
+  </div>
+  <input id="search-box" type="search" placeholder="Search standards…">
+</div>
+
+<div class="layout">
+  <div class="std-list-panel">
+    <div class="std-list-header">
+      Standards <span class="std-count" id="std-count"></span>
+    </div>
+    <div id="std-list"></div>
+  </div>
+  <div class="detail-panel" id="detail-panel">
+    <div class="empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      <h2>Select a standard</h2>
+      <p>Click any standard on the left to see the<br>National, Texas, and California alignments.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── PREREQUISITES ─────────────────────────────────────────────────────────────
+// Keyed by FL BEST standard code. Each entry lists the prior-grade FL BEST
+// standards students need before tackling this one.
+const PREREQS = {
+  // ── Grade 6 ── (prerequisites from Grade 5 FL BEST) ────────────────────────
+  "MA.6.NSO.1.1": [
+    { code: "MA.5.NSO.2.1", grade: "Gr. 5", desc: "Multiply multi-digit whole numbers including using a standard algorithm with procedural fluency." },
+    { code: "MA.5.NSO.2.2", grade: "Gr. 5", desc: "Divide multi-digit whole numbers by one- and two-digit whole numbers; represent remainders appropriately." }
+  ],
+  "MA.6.NSO.1.2": [
+    { code: "MA.5.NSO.1.3", grade: "Gr. 5", desc: "Compose and decompose multi-digit numbers with decimals to the thousandths; demonstrate the relationship between adjacent digits." },
+    { code: "MA.5.NSO.1.4", grade: "Gr. 5", desc: "Plot, order, and compare positive multi-digit decimals and fractions, including mixed numbers, using a variety of tools." }
+  ],
+  "MA.6.NSO.2.1": [
+    { code: "MA.5.NSO.2.2", grade: "Gr. 5", desc: "Divide multi-digit whole numbers by one- and two-digit whole numbers." },
+    { code: "MA.5.NSO.2.4", grade: "Gr. 5", desc: "Extend previous understanding of multiplication to multiply a fraction by a fraction, including mixed numbers and fractions greater than 1." }
+  ],
+  "MA.6.NSO.2.2": [
+    { code: "MA.5.NSO.2.1", grade: "Gr. 5", desc: "Multiply multi-digit whole numbers including using a standard algorithm with procedural fluency." },
+    { code: "MA.5.NSO.1.3", grade: "Gr. 5", desc: "Compose and decompose multi-digit numbers; demonstrate the relationship between adjacent digits (place value foundation for negatives)." }
+  ],
+  "MA.6.NSO.2.3": [
+    { code: "MA.5.NSO.2.4", grade: "Gr. 5", desc: "Multiply a fraction by a fraction, including mixed numbers and fractions greater than 1." },
+    { code: "MA.5.NSO.2.5", grade: "Gr. 5", desc: "Extend previous understanding of division to divide a unit fraction by a whole number and a whole number by a unit fraction." }
+  ],
+  "MA.6.NSO.2.4": [
+    { code: "MA.5.NSO.1.1", grade: "Gr. 5", desc: "Express how the value of a digit in a multi-digit number changes if the digit moves one place to the left or right." },
+    { code: "MA.5.NSO.1.4", grade: "Gr. 5", desc: "Plot, order, and compare positive multi-digit decimals and fractions using a variety of tools." }
+  ],
+  "MA.6.AR.1.1": [
+    { code: "MA.5.NSO.1.4", grade: "Gr. 5", desc: "Plot, order, and compare positive fractions and decimals — foundation for understanding part-to-part and part-to-whole ratios." },
+    { code: "MA.5.AR.2.1", grade: "Gr. 5", desc: "Create numerical patterns using any of the four operations with given rules; identify apparent relationships between corresponding terms." }
+  ],
+  "MA.6.AR.1.2": [
+    { code: "MA.5.AR.2.1", grade: "Gr. 5", desc: "Create numerical patterns using any of the four operations with given rules." },
+    { code: "MA.5.NSO.2.4", grade: "Gr. 5", desc: "Multiply a fraction by a fraction, including mixed numbers — needed for ratio scaling." }
+  ],
+  "MA.6.AR.1.3": [
+    { code: "MA.5.NSO.2.5", grade: "Gr. 5", desc: "Divide a unit fraction by a whole number and a whole number by a unit fraction — foundational for unit rates involving fractions." },
+    { code: "MA.5.AR.2.1", grade: "Gr. 5", desc: "Create numerical patterns using any of the four operations with given rules." }
+  ],
+  "MA.6.AR.2.1": [
+    { code: "MA.5.AR.1.1", grade: "Gr. 5", desc: "Solve multi-step real-world problems involving any combination of the four operations with whole numbers, fractions, and decimals." },
+    { code: "MA.5.AR.1.2", grade: "Gr. 5", desc: "Evaluate multi-step numerical expressions using order of operations with no exponents." }
+  ],
+  "MA.6.AR.2.2": [
+    { code: "MA.5.AR.1.2", grade: "Gr. 5", desc: "Evaluate multi-step numerical expressions using order of operations — prerequisite for substituting values into inequalities." },
+    { code: "MA.4.AR.2.1", grade: "Gr. 4", desc: "Determine and explain whether an equation involving any of the four operations is true or false (foundational understanding of equality/inequality)." }
+  ],
+  "MA.6.AR.2.3": [
+    { code: "MA.5.AR.1.2", grade: "Gr. 5", desc: "Evaluate multi-step numerical expressions using order of operations with no exponents." },
+    { code: "MA.5.NSO.2.1", grade: "Gr. 5", desc: "Multiply multi-digit whole numbers — needed for substituting values and computing results." }
+  ],
+  "MA.6.AR.2.4": [
+    { code: "MA.5.AR.1.2", grade: "Gr. 5", desc: "Evaluate multi-step numerical expressions using order of operations, including applying properties of operations." },
+    { code: "MA.5.NSO.2.1", grade: "Gr. 5", desc: "Multiply multi-digit whole numbers, applying distributive property strategies." }
+  ],
+  "MA.6.AR.3.1": [
+    { code: "MA.5.AR.1.1", grade: "Gr. 5", desc: "Solve multi-step real-world problems involving any combination of the four operations." },
+    { code: "MA.5.AR.2.3", grade: "Gr. 5", desc: "Identify and graph ordered pairs representing the relationship between two numerical patterns." }
+  ],
+  "MA.6.AR.3.2": [
+    { code: "MA.5.AR.1.2", grade: "Gr. 5", desc: "Evaluate multi-step numerical expressions using order of operations." },
+    { code: "MA.6.AR.2.2", grade: "Gr. 6 (same year)", desc: "Translate a written description into an algebraic inequality — foundational for solving inequalities." }
+  ],
+  "MA.6.AR.3.4": [
+    { code: "MA.5.GR.4.1", grade: "Gr. 5", desc: "Identify the origin and axes of the coordinate plane; identify and plot ordered pairs in the first quadrant." },
+    { code: "MA.5.AR.2.3", grade: "Gr. 5", desc: "Generate and graph ordered pairs from numerical patterns to represent relationships." }
+  ],
+  "MA.6.AR.3.5": [
+    { code: "MA.5.AR.2.1", grade: "Gr. 5", desc: "Create numerical patterns using any of the four operations with given rules." },
+    { code: "MA.6.AR.1.1", grade: "Gr. 6 (same year)", desc: "Write and interpret ratios — understanding proportional relationships depends on ratio fluency." }
+  ],
+  "MA.6.GR.1.1": [
+    { code: "MA.5.GR.4.1", grade: "Gr. 5", desc: "Identify the origin and axes of the coordinate plane; identify and plot ordered pairs in the first quadrant." },
+    { code: "MA.5.GR.4.2", grade: "Gr. 5", desc: "Represent mathematical and real-world problems by plotting ordered pairs in the first quadrant." }
+  ],
+  "MA.6.GR.1.2": [
+    { code: "MA.5.GR.4.1", grade: "Gr. 5", desc: "Identify and plot ordered pairs in the first quadrant of the coordinate plane." },
+    { code: "MA.6.GR.1.1", grade: "Gr. 6 (same year)", desc: "Plot rational-number ordered pairs in all four quadrants — must be mastered before computing distances." }
+  ],
+  "MA.6.GR.1.3": [
+    { code: "MA.5.GR.4.2", grade: "Gr. 5", desc: "Represent mathematical and real-world problems by graphing ordered pairs in the first quadrant." },
+    { code: "MA.6.GR.1.1", grade: "Gr. 6 (same year)", desc: "Plot rational numbers on the full coordinate plane." }
+  ],
+  "MA.6.GR.2.1": [
+    { code: "MA.5.GR.2.1", grade: "Gr. 5", desc: "Find the perimeter and area of a rectangle with fractional or decimal side lengths using a visual model or formula." }
+  ],
+  "MA.6.GR.2.2": [
+    { code: "MA.5.GR.2.1", grade: "Gr. 5", desc: "Find the perimeter and area of a rectangle with fractional or decimal side lengths." },
+    { code: "MA.6.GR.2.1", grade: "Gr. 6 (same year)", desc: "Derive and apply the area formula for a right triangle — needed to decompose composite figures." }
+  ],
+  "MA.6.GR.2.3": [
+    { code: "MA.5.GR.3.1", grade: "Gr. 5", desc: "Find the volume of a right rectangular prism with whole-number side lengths by packing it with unit cubes and apply the formula V = l × w × h." }
+  ],
+  "MA.6.GR.2.4": [
+    { code: "MA.5.GR.3.2", grade: "Gr. 5", desc: "Identify and classify three-dimensional figures and describe their attributes." },
+    { code: "MA.6.GR.2.1", grade: "Gr. 6 (same year)", desc: "Area of right triangles — needed to find surface area of pyramids via nets." }
+  ],
+  "MA.6.DP.1.1": [
+    { code: "MA.5.DP.1.1", grade: "Gr. 5", desc: "Collect and represent numerical data, including fractional values, using tables, line graphs, and line plots." }
+  ],
+  "MA.6.DP.1.2": [
+    { code: "MA.5.DP.1.1", grade: "Gr. 5", desc: "Collect and represent numerical data using tables, line graphs, and line plots." },
+    { code: "MA.5.DP.1.2", grade: "Gr. 5", desc: "Interpret data represented in line plots and stem-and-leaf plots by determining the mean, median, mode, and range." }
+  ],
+  "MA.6.DP.1.3": [
+    { code: "MA.5.DP.1.2", grade: "Gr. 5", desc: "Interpret data in line plots and stem-and-leaf plots, including determining the mean, median, mode, and range." },
+    { code: "MA.6.DP.1.2", grade: "Gr. 6 (same year)", desc: "Find and interpret mean, median, mode, and range — quartiles extend these concepts." }
+  ],
+  "MA.6.DP.1.4": [
+    { code: "MA.5.DP.1.1", grade: "Gr. 5", desc: "Collect and represent numerical data using tables, line graphs, and line plots." },
+    { code: "MA.6.DP.1.2", grade: "Gr. 6 (same year)", desc: "Find and interpret measures of center — needed to assess shape and spread." }
+  ],
+  "MA.6.DP.1.5": [
+    { code: "MA.6.DP.1.2", grade: "Gr. 6 (same year)", desc: "Find and interpret mean, median, mode, and range." },
+    { code: "MA.6.DP.1.3", grade: "Gr. 6 (same year)", desc: "Determine quartiles and interpret box plots — required before creating them." }
+  ],
+
+  // ── Grade 7 ── (prerequisites from Grade 6 FL BEST) ────────────────────────
+  "MA.7.NSO.1.1": [
+    { code: "MA.6.NSO.2.2", grade: "Gr. 6", desc: "Extend operations with whole numbers to add, subtract, multiply, and divide integers with procedural fluency." },
+    { code: "MA.6.NSO.2.1", grade: "Gr. 6", desc: "Multiply and divide positive multi-digit numbers with decimals to the thousandths." }
+  ],
+  "MA.7.NSO.1.2": [
+    { code: "MA.6.NSO.2.2", grade: "Gr. 6", desc: "Add, subtract, multiply, and divide integers with procedural fluency." },
+    { code: "MA.6.NSO.2.3", grade: "Gr. 6", desc: "Solve multi-step real-world problems with fractions and decimals." }
+  ],
+  "MA.7.AR.1.1": [
+    { code: "MA.6.AR.1.1", grade: "Gr. 6", desc: "Write and interpret ratios using appropriate notation." },
+    { code: "MA.6.AR.3.5", grade: "Gr. 6", desc: "Determine if a relationship between two numerical variables is proportional or not proportional." }
+  ],
+  "MA.7.AR.1.2": [
+    { code: "MA.6.AR.1.3", grade: "Gr. 6", desc: "Calculate unit rates for ratios involving fractions with units of measure." },
+    { code: "MA.6.AR.3.4", grade: "Gr. 6", desc: "Represent relationships between two numerical variables on a coordinate plane." }
+  ],
+  "MA.7.AR.1.3": [
+    { code: "MA.6.AR.1.2", grade: "Gr. 6", desc: "Apply understanding of ratios to solve problems." },
+    { code: "MA.6.AR.3.1", grade: "Gr. 6", desc: "Write and solve one-step equations in one variable." }
+  ],
+  "MA.7.AR.2.1": [
+    { code: "MA.6.AR.2.1", grade: "Gr. 6", desc: "Translate written descriptions into algebraic expressions." },
+    { code: "MA.6.AR.2.4", grade: "Gr. 6", desc: "Apply properties of operations to generate equivalent algebraic expressions." }
+  ],
+  "MA.7.AR.2.2": [
+    { code: "MA.6.AR.3.1", grade: "Gr. 6", desc: "Write and solve one-step equations in one variable with rational number solutions." },
+    { code: "MA.7.NSO.1.1", grade: "Gr. 7 (same year)", desc: "Add and subtract rational numbers — needed to isolate variables with rational coefficients." }
+  ],
+  "MA.7.AR.2.3": [
+    { code: "MA.6.AR.3.2", grade: "Gr. 6", desc: "Write and solve one-step inequalities in one variable." },
+    { code: "MA.7.AR.2.2", grade: "Gr. 7 (same year)", desc: "Write and solve two-step equations — parallel structure supports two-step inequalities." }
+  ],
+  "MA.7.AR.3.1": [
+    { code: "MA.6.NSO.1.2", grade: "Gr. 6", desc: "Rewrite positive rational numbers in equivalent forms: fractions, decimals, and percentages." },
+    { code: "MA.6.AR.1.2", grade: "Gr. 6", desc: "Apply understanding of ratios to solve problems — percent is a special ratio (per 100)." }
+  ],
+  "MA.7.AR.3.2": [
+    { code: "MA.7.AR.3.1", grade: "Gr. 7 (same year)", desc: "Solve percent problems including tax, tip, discount, and percent of change — foundation for interest calculations." },
+    { code: "MA.7.NSO.1.2", grade: "Gr. 7 (same year)", desc: "Multiply and divide rational numbers — needed to apply interest formulas." }
+  ],
+  "MA.7.GR.1.1": [
+    { code: "MA.5.GR.1.1", grade: "Gr. 5", desc: "Classify triangles and quadrilaterals; identify right angles — prerequisite for angle relationship reasoning." },
+    { code: "MA.4.GR.1.1", grade: "Gr. 4", desc: "Identify and draw points, lines, line segments, rays, angles, and perpendicular/parallel lines." }
+  ],
+  "MA.7.GR.1.2": [
+    { code: "MA.7.AR.1.1", grade: "Gr. 7 (same year)", desc: "Represent proportional relationships — scale factor is a ratio." },
+    { code: "MA.6.GR.1.3", grade: "Gr. 6", desc: "Solve problems by plotting points on a coordinate plane." }
+  ],
+  "MA.7.GR.1.3": [
+    { code: "MA.7.GR.1.1", grade: "Gr. 7 (same year)", desc: "Solve problems involving complementary, supplementary, vertical, and adjacent angles — equation-writing skills transfer directly to triangle angle sum problems." },
+    { code: "MA.4.GR.1.1", grade: "Gr. 4", desc: "Identify and classify angles — foundation for understanding that all three interior angles of a triangle combine to form a straight angle (180°)." }
+  ],
+  "MA.7.GR.1.4": [
+    { code: "MA.7.GR.1.3", grade: "Gr. 7 (same year)", desc: "Apply the triangle angle sum theorem — triangle inequality builds on understanding angle and side constraints within triangles." },
+    { code: "MA.6.GR.1.2", grade: "Gr. 6", desc: "Find unknown side lengths and angles using properties of geometric figures." }
+  ],
+  "MA.7.GR.1.5": [
+    { code: "MA.7.GR.1.3", grade: "Gr. 7 (same year)", desc: "Triangle angle sum theorem — polygons are decomposed into triangles to derive the polygon angle sum formula." },
+    { code: "MA.6.GR.1.1", grade: "Gr. 6", desc: "Extend previous understanding of the coordinate plane — polygon properties are explored within geometric figures." }
+  ],
+  "MA.7.AR.3.3": [
+    { code: "MA.7.AR.3.1", grade: "Gr. 7 (same year)", desc: "Solve percent problems including tax, tip, discount, and markup — percent of change builds on the same proportional percent reasoning." },
+    { code: "MA.6.RP.1.3", grade: "Gr. 6", desc: "Use ratio reasoning and proportional relationships — percent of change is a ratio comparing the change to the original amount." }
+  ],
+  "MA.7.NSO.2.1": [
+    { code: "MA.7.NSO.1.1", grade: "Gr. 7 (same year)", desc: "Add and subtract rational numbers — NSO.2.1 applies all four operations together in multi-step real-world contexts." },
+    { code: "MA.7.NSO.1.2", grade: "Gr. 7 (same year)", desc: "Multiply and divide rational numbers — both operation pairs are combined in multi-step problem solving." }
+  ],
+  "MA.7.DP.1.4": [
+    { code: "MA.7.DP.1.2", grade: "Gr. 7 (same year)", desc: "Compare data sets using measures of center and variability — selecting the most appropriate measure extends comparison skills." },
+    { code: "MA.6.DP.1.2", grade: "Gr. 6", desc: "Find and interpret mean, median, mode, and range — understanding what each measure represents is prerequisite to choosing among them." }
+  ],
+  "MA.7.AR.4.5": [
+    { code: "MA.7.AR.1.1", grade: "Gr. 7 (same year)", desc: "Identify proportional relationships using tables, graphs, and equations — AR.4.5 extends this to comparing and contrasting proportional and non-proportional relationships." },
+    { code: "MA.7.AR.1.2", grade: "Gr. 7 (same year)", desc: "Determine the constant of proportionality — interpreting the unit rate in context is central to analyzing relationships across multiple representations." }
+  ],
+  "MA.7.GR.2.1": [
+    { code: "MA.6.GR.2.2", grade: "Gr. 6", desc: "Solve problems involving area of quadrilaterals and composite figures." },
+    { code: "MA.5.GR.2.1", grade: "Gr. 5", desc: "Find the perimeter and area of a rectangle with fractional side lengths." }
+  ],
+  "MA.7.GR.2.2": [
+    { code: "MA.7.GR.2.1", grade: "Gr. 7 (same year)", desc: "Solve problems involving circumference and area of circles — circles are components of composite figures." },
+    { code: "MA.6.GR.2.2", grade: "Gr. 6", desc: "Solve problems involving area of quadrilaterals and composite figures." }
+  ],
+  "MA.7.GR.2.3": [
+    { code: "MA.6.GR.2.3", grade: "Gr. 6", desc: "Solve problems involving the volume of right rectangular prisms." },
+    { code: "MA.6.GR.2.4", grade: "Gr. 6", desc: "Find surface area of right rectangular prisms and pyramids using nets." }
+  ],
+  "MA.7.NSO.2.2": [
+    { code: "MA.7.NSO.1.1", grade: "Gr. 7 (same year)", desc: "Add and subtract rational numbers — NSO.2.2 brings all four operations together for procedural fluency." },
+    { code: "MA.7.NSO.1.2", grade: "Gr. 7 (same year)", desc: "Multiply and divide rational numbers — combined with addition/subtraction to achieve full fluency." }
+  ],
+  "MA.7.NSO.2.3": [
+    { code: "MA.7.NSO.2.2", grade: "Gr. 7 (same year)", desc: "Procedural fluency with all four rational number operations — NSO.2.3 applies that fluency to real-world contexts." },
+    { code: "MA.6.NSO.2.3", grade: "Gr. 6", desc: "Solve multi-step real-world problems with fractions and decimals — extended to full rational number range in Grade 7." }
+  ],
+  "MA.7.DP.2.1": [
+    { code: "MA.6.DP.1.5", grade: "Gr. 6", desc: "Create box plots and histograms to represent data sets — experience organizing data into structured displays supports listing sample spaces." },
+    { code: "MA.6.NSO.1.2", grade: "Gr. 6", desc: "Rewrite rational numbers as fractions, decimals, and percents — probability values are expressed in all three forms." }
+  ],
+  "MA.7.DP.2.2": [
+    { code: "MA.7.DP.2.1", grade: "Gr. 7 (same year)", desc: "Determine the sample space for a simple experiment — must identify all outcomes before comparing likelihoods." },
+    { code: "MA.6.NSO.1.2", grade: "Gr. 6", desc: "Rational numbers in equivalent forms — probability comparisons require converting between fractions, decimals, and percents." }
+  ],
+  "MA.7.DP.2.3": [
+    { code: "MA.7.DP.2.2", grade: "Gr. 7 (same year)", desc: "Interpret and compare probabilities — theoretical probability quantifies the likelihood comparisons established here." },
+    { code: "MA.7.NSO.1.2", grade: "Gr. 7 (same year)", desc: "Multiply and divide rational numbers — computing theoretical probability requires dividing favorable outcomes by total outcomes." }
+  ],
+  "MA.7.DP.2.4": [
+    { code: "MA.7.DP.2.3", grade: "Gr. 7 (same year)", desc: "Find theoretical probability — experimental results are compared against the theoretical benchmark established here." },
+    { code: "MA.6.DP.1.5", grade: "Gr. 6", desc: "Create data displays — recording and organizing experimental trial results builds on data representation skills." }
+  ],
+  "MA.7.DP.1.1": [
+    { code: "MA.6.DP.1.1", grade: "Gr. 6", desc: "Recognize and formulate a statistical question that would generate numerical data." },
+    { code: "MA.6.DP.1.2", grade: "Gr. 6", desc: "Find and interpret mean, median, mode, and range." }
+  ],
+  "MA.7.DP.1.2": [
+    { code: "MA.6.DP.1.4", grade: "Gr. 6", desc: "Qualitatively assess and interpret data distributions from histograms and line plots." },
+    { code: "MA.7.DP.1.1", grade: "Gr. 7 (same year)", desc: "Determine an appropriate sample and understand randomness — sets up population modeling for probability." }
+  ],
+  "MA.7.DP.1.3": [
+    { code: "MA.7.DP.1.2", grade: "Gr. 7 (same year)", desc: "Compare data sets using measures of center and variability — choosing appropriate displays builds on comparing distributions." }
+  ],
+
+  // ── Grade 8 ── (prerequisites from Grade 7 FL BEST) ────────────────────────
+  "MA.8.NSO.1.1": [
+    { code: "MA.7.NSO.1.2", grade: "Gr. 7", desc: "Multiply and divide rational numbers — inverse operations used to evaluate square and cube roots." },
+    { code: "MA.6.NSO.1.1", grade: "Gr. 6", desc: "Find GCF, LCM, and prime factorization — prime factorization identifies perfect squares/cubes." }
+  ],
+  "MA.8.NSO.1.2": [
+    { code: "MA.8.NSO.1.1", grade: "Gr. 8 (same year)", desc: "Evaluate square and cube roots — needed to place irrational values on a number line." },
+    { code: "MA.7.NSO.1.1", grade: "Gr. 7", desc: "Add and subtract rational numbers — students must distinguish rational from irrational." }
+  ],
+  "MA.8.NSO.1.3": [
+    { code: "MA.6.NSO.1.1", grade: "Gr. 6", desc: "Prime factorization and whole-number exponents — foundation for exponent properties." },
+    { code: "MA.7.NSO.1.2", grade: "Gr. 7", desc: "Multiply and divide rational numbers — exponent rules involve repeated multiplication/division." }
+  ],
+  "MA.8.NSO.1.4": [
+    { code: "MA.8.NSO.1.3", grade: "Gr. 8 (same year)", desc: "Properties of integer exponents — scientific notation relies on powers of 10." },
+    { code: "MA.7.NSO.1.2", grade: "Gr. 7", desc: "Multiply and divide rational numbers — operations in scientific notation." }
+  ],
+  "MA.8.AR.1.1": [
+    { code: "MA.7.AR.2.2", grade: "Gr. 7", desc: "Write and solve two-step equations in one variable with rational coefficients." },
+    { code: "MA.7.NSO.1.1", grade: "Gr. 7", desc: "Add and subtract rational numbers — manipulating equations requires rational number fluency." }
+  ],
+  "MA.8.AR.1.2": [
+    { code: "MA.8.AR.1.1", grade: "Gr. 8 (same year)", desc: "Write and solve multi-step linear equations — writing equations from representations extends this skill." },
+    { code: "MA.7.AR.1.2", grade: "Gr. 7", desc: "Determine the constant of proportionality (unit rate/slope) from tables and graphs." }
+  ],
+  "MA.8.AR.2.1": [
+    { code: "MA.8.AR.1.1", grade: "Gr. 8 (same year)", desc: "Write and solve multi-step linear equations in one variable — systems extend this to two variables." },
+    { code: "MA.8.AR.1.2", grade: "Gr. 8 (same year)", desc: "Write linear equations from tables and graphs — both equations in a system must be writeable." }
+  ],
+  "MA.8.AR.2.2": [
+    { code: "MA.8.AR.1.2", grade: "Gr. 8 (same year)", desc: "Write linear equations from tables, graphs, and verbal descriptions." },
+    { code: "MA.7.AR.1.1", grade: "Gr. 7", desc: "Represent proportional relationships with tables, graphs, and equations." }
+  ],
+  "MA.8.AR.3.1": [
+    { code: "MA.6.AR.3.4", grade: "Gr. 6", desc: "Represent relationships between two numerical variables on a coordinate plane." },
+    { code: "MA.7.AR.2.2", grade: "Gr. 7", desc: "Write and solve two-step equations — functions are equations relating input to output." }
+  ],
+  "MA.8.AR.3.2": [
+    { code: "MA.8.AR.1.2", grade: "Gr. 8 (same year)", desc: "Write linear equations from tables and graphs — recognizing linearity requires writing those equations." },
+    { code: "MA.8.AR.3.1", grade: "Gr. 8 (same year)", desc: "Determine whether a relation is a function — must identify functions before classifying them." }
+  ],
+  "MA.8.AR.3.3": [
+    { code: "MA.8.AR.3.2", grade: "Gr. 8 (same year)", desc: "Determine whether a function is linear or nonlinear." },
+    { code: "MA.8.AR.1.2", grade: "Gr. 8 (same year)", desc: "Write linear equations from tables and graphs — slope and y-intercept interpretation." }
+  ],
+  "MA.8.GR.1.1": [
+    { code: "MA.6.GR.1.1", grade: "Gr. 6", desc: "Plot rational-number ordered pairs in all four quadrants of the coordinate plane." },
+    { code: "MA.7.GR.1.2", grade: "Gr. 7", desc: "Solve problems involving scale drawings — intuition for proportional resizing supports dilation/similarity." }
+  ],
+  "MA.8.GR.1.2": [
+    { code: "MA.8.GR.1.1", grade: "Gr. 8 (same year)", desc: "Identify and perform rigid transformations (translations, reflections, rotations)." },
+    { code: "MA.7.AR.1.1", grade: "Gr. 7", desc: "Represent proportional relationships — scale factor in dilations is a ratio." }
+  ],
+  "MA.8.GR.1.3": [
+    { code: "MA.8.NSO.1.1", grade: "Gr. 8 (same year)", desc: "Evaluate square roots — the theorem produces answers requiring square root evaluation." },
+    { code: "MA.6.GR.2.1", grade: "Gr. 6", desc: "Derive and apply the area formula for a right triangle — the proof of the Pythagorean Theorem uses area of triangles." }
+  ],
+  "MA.8.GR.1.4": [
+    { code: "MA.8.GR.1.3", grade: "Gr. 8 (same year)", desc: "Use the Pythagorean Theorem — the converse directly builds on theorem mastery." }
+  ],
+  "MA.8.GR.1.5": [
+    { code: "MA.8.GR.1.3", grade: "Gr. 8 (same year)", desc: "Use the Pythagorean Theorem — distance formula is an application of the theorem in a coordinate context." },
+    { code: "MA.6.GR.1.2", grade: "Gr. 6", desc: "Find distances between ordered pairs with the same x- or y-coordinate." }
+  ],
+  "MA.8.GR.2.1": [
+    { code: "MA.7.GR.2.3", grade: "Gr. 7", desc: "Solve problems involving volume and surface area of prisms and pyramids." },
+    { code: "MA.6.GR.2.3", grade: "Gr. 6", desc: "Solve problems involving the volume of right rectangular prisms." }
+  ],
+  "MA.8.DP.1.1": [
+    { code: "MA.7.DP.1.1", grade: "Gr. 7", desc: "Determine appropriate samples and use random sampling to make inferences about a population." },
+    { code: "MA.6.DP.1.4", grade: "Gr. 6", desc: "Qualitatively assess and interpret histograms and line plots — reading data displays is prerequisite to scatter plots." }
+  ],
+  "MA.8.DP.1.2": [
+    { code: "MA.8.DP.1.1", grade: "Gr. 8 (same year)", desc: "Create and interpret scatter plots and describe patterns of association." },
+    { code: "MA.8.AR.3.3", grade: "Gr. 8 (same year)", desc: "Analyze and represent linear functions — the line of best fit is a linear function." }
+  ],
+  "MA.8.DP.1.3": [
+    { code: "MA.7.DP.1.2", grade: "Gr. 7", desc: "Compare data sets using measures of center and variability — interpreting distributions supports two-way table analysis." },
+    { code: "MA.6.DP.1.5", grade: "Gr. 6", desc: "Create box plots and histograms — categorical data displays lead naturally to two-way tables." }
+  ]
+};
+
+// ─── STANDARDS DATABASE ────────────────────────────────────────────────────────
+const DB = {
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  GRADE 6
+// ══════════════════════════════════════════════════════════════════════════════
+6: [
+  // ── Q1 · Number Sense & Operations ──────────────────────────────────────────
+  {
+    code: "MA.6.NSO.1.1",
+    title: "GCF, LCM & Prime Factorization",
+    desc: "Given a mathematical or real-world context, find the greatest common factor (GCF) and least common multiple (LCM) of two whole numbers using prime factorization, lists of multiples/factors, or other methods.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "6.NS.B.4",
+      title: "GCF, LCM & Distributive Property",
+      desc: "Find the greatest common factor of two whole numbers ≤100 and the LCM of two whole numbers ≤12. Use the distributive property to express a sum of two whole numbers 1–100 with a common factor as a multiple of a sum.",
+      note: "Florida's standard extends GCF/LCM into prime factorization explicitly and applies these concepts in wider real-world contexts."
+    },
+    tx: {
+      code: "6.7A",
+      title: "Prime Factorization & Equivalent Expressions",
+      desc: "Generate equivalent numerical expressions using order of operations, including whole-number exponents and prime factorization.",
+      note: "Texas wraps prime factorization inside expression equivalence rather than treating it as a standalone number-sense standard."
+    },
+    ca: {
+      code: "6.NS.4",
+      title: "GCF, LCM & Distributive Property",
+      desc: "Find the greatest common factor of two whole numbers ≤100 and the LCM of two whole numbers ≤12. Use the distributive property to express a sum with a common factor. (Identical to CCSS 6.NS.B.4; CA frameworks also emphasize real-world applications.)",
+      note: "California follows CCSS exactly here; pacing frameworks recommend connecting GCF/LCM to fraction simplification."
+    }
+  },
+  {
+    code: "MA.6.NSO.1.2",
+    title: "Rational Numbers in Equivalent Forms",
+    desc: "Rewrite positive rational numbers in different but equivalent forms including fractions, mixed numbers, decimals, and percentages.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "6.NS.C.6 / 6.RP.A.3c",
+      title: "Rational Numbers & Percent",
+      desc: "6.NS.C.6: Understand a rational number as a point on the number line. 6.RP.A.3c: Find a percent of a quantity as a rate per 100; solve problems involving percent of a quantity.",
+      note: "CCSS treats fraction-decimal-percent conversion within ratio/rate context rather than as a standalone equivalence standard."
+    },
+    tx: {
+      code: "6.4F / 6.2E",
+      title: "Fractions, Decimals & Percents",
+      desc: "6.4F: Represent benchmark fractions and percents on a number line. 6.2E: Convert between fractions, decimals, whole numbers, and percents flexibly and fluently.",
+      note: "Texas provides more explicit conversion fluency expectations in 6.2E."
+    },
+    ca: {
+      code: "6.NS.6 / 6.RP.3c",
+      title: "Rational Numbers & Percent",
+      desc: "Same as CCSS. California frameworks add an emphasis on using visual fraction models and connecting decimal notation to place value understanding developed in elementary grades.",
+      note: "No substantive difference from CCSS for this standard in California."
+    }
+  },
+  {
+    code: "MA.6.NSO.2.1",
+    title: "Multiply & Divide Multi-Digit Decimals",
+    desc: "Multiply and divide positive multi-digit numbers with decimals to the thousandths, including using a standard algorithm with procedural fluency.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "6.NS.B.3",
+      title: "Fluently Add, Subtract, Multiply, Divide Multi-Digit Decimals",
+      desc: "Fluently add, subtract, multiply, and divide multi-digit decimals using the standard algorithm for each operation.",
+      note: "CCSS 6.NS.B.3 includes all four operations; Florida breaks these into separate standards (2.1 focuses on multiplication and division)."
+    },
+    tx: {
+      code: "6.3B / 6.3E",
+      title: "Operations with Decimals",
+      desc: "6.3B: Determine with fluency the computation of sums, differences, products, and quotients of decimals to the hundredths. 6.3E: Solve real-world problems involving multi-step operations with decimals.",
+      note: "Texas limits decimal fluency to hundredths in 6th grade vs. Florida's thousandths."
+    },
+    ca: {
+      code: "6.NS.3",
+      title: "Fluently Operate with Multi-Digit Decimals",
+      desc: "Fluently add, subtract, multiply, and divide multi-digit decimals using the standard algorithm. (Identical to CCSS.) California emphasizes estimation strategies alongside standard algorithm.",
+      note: "California and CCSS are identical here."
+    }
+  },
+  {
+    code: "MA.6.NSO.2.2",
+    title: "Integer Operations",
+    desc: "Extend previous understanding of operations with whole numbers to add, subtract, multiply, and divide integers with procedural fluency.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "6.NS.C.5 / 6.NS.C.6 / 7.NS.A.1–2",
+      title: "Understand Integers; Operate with Rational Numbers",
+      desc: "6.NS.C.5–6: Understand and represent positive and negative numbers. Note: CCSS places full integer operations (multiply/divide) in Grade 7 (7.NS.A.1–2), not Grade 6.",
+      note: "Florida accelerates integer operations into Grade 6; CCSS reserves multiplication/division of integers for Grade 7."
+    },
+    tx: {
+      code: "6.3C / 6.3D",
+      title: "Integer Operations",
+      desc: "6.3C: Represent integer operations with concrete models and connect the actions to algorithms. 6.3D: Add, subtract, multiply, and divide integers fluently.",
+      note: "Texas and Florida are aligned on full integer operations in Grade 6."
+    },
+    ca: {
+      code: "6.NS.5–6 / 7.NS.1–2",
+      title: "Integers in Grade 6; Operations in Grade 7",
+      desc: "California follows CCSS grade placement: integers are introduced in 6th grade but multiplication/division of integers is a 7th-grade standard (7.NS.1–2).",
+      note: "California students encounter integer multiplication/division one year later than Florida students."
+    }
+  },
+  {
+    code: "MA.6.NSO.2.3",
+    title: "Multi-Step Problems with Fractions & Decimals",
+    desc: "Solve multi-step real-world problems involving any of the four operations with positive multi-digit decimals or positive fractions, including mixed numbers.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "6.NS.A.1 / 6.NS.B.3",
+      title: "Divide Fractions; Operate with Decimals",
+      desc: "6.NS.A.1: Interpret and compute quotients of fractions; solve word problems involving division of fractions by fractions. 6.NS.B.3: Fluently add, subtract, multiply, and divide multi-digit decimals.",
+      note: "CCSS addresses fraction and decimal operations in separate standards; Florida integrates them in multi-step problem contexts."
+    },
+    tx: {
+      code: "6.3A / 6.3E",
+      title: "Fraction Division; Real-World Multi-Step",
+      desc: "6.3A: Recognize that dividing by a rational number and multiplying by its reciprocal result in equivalent values. 6.3E: Solve multi-step problems involving operations with positive rational numbers.",
+      note: "Texas aligns closely with Florida here."
+    },
+    ca: {
+      code: "6.NS.1 / 6.NS.3",
+      title: "Divide Fractions; Multi-Step Decimals",
+      desc: "6.NS.1: Interpret and compute quotients of fractions; solve word problems (e.g., how many ¾-cup servings are in ⅔ of a cup). 6.NS.3: Fluently operate with decimals.",
+      note: "California is identical to CCSS; emphasizes visual models for fraction division."
+    }
+  },
+  {
+    code: "MA.6.NSO.2.4",
+    title: "Number Line & Absolute Value",
+    desc: "Represent rational numbers, including negative fractions and decimals, on a number line; interpret absolute value as distance from zero; compare absolute values in real-world contexts.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "6.NS.C.6 / 6.NS.C.7",
+      title: "Rational Numbers on Number Line; Absolute Value",
+      desc: "6.NS.C.6: Understand a rational number as a point on the number line; extend number line diagrams and coordinate axes. 6.NS.C.7: Understand ordering and absolute value of rational numbers.",
+      note: "Direct alignment between Florida and CCSS on this cluster."
+    },
+    tx: {
+      code: "6.2A / 6.2B / 6.2C",
+      title: "Rational Numbers; Absolute Value; Ordering",
+      desc: "6.2A: Classify whole numbers, integers, and rational numbers using a visual representation. 6.2B: Identify a number, its opposite, and its absolute value. 6.2C: Locate, compare, and order integers and rational numbers.",
+      note: "Texas breaks this into three separate standards; content is equivalent."
+    },
+    ca: {
+      code: "6.NS.6 / 6.NS.7",
+      title: "Rational Numbers on Number Line; Absolute Value",
+      desc: "Identical to CCSS 6.NS.C.6 and 6.NS.C.7. California frameworks include additional emphasis on using number lines to compare negative numbers in real-world contexts like temperature.",
+      note: "No substantive difference from CCSS."
+    }
+  },
+  {
+    code: "MA.6.AR.1.1",
+    title: "Write & Interpret Ratios",
+    desc: "Given a mathematical or real-world context, write and interpret ratios to show the relative sizes of two quantities using appropriate notation (a:b, a to b, or a/b).",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "6.RP.A.1",
+      title: "Understand the Concept of a Ratio",
+      desc: "Understand the concept of a ratio and use ratio language to describe a ratio relationship between two quantities (e.g., 'The ratio of wings to beaks in the bird house at the zoo was 2:1').",
+      note: "Strong direct alignment. Florida explicitly includes all three notations (a:b, a to b, a/b); CCSS uses ratio language broadly."
+    },
+    tx: {
+      code: "6.4B / 6.4C",
+      title: "Ratios & Rates",
+      desc: "6.4B: Apply qualitative and quantitative reasoning to solve prediction and comparison of real-world problems involving ratios and rates. 6.4C: Give examples of ratios as multiplicative comparisons of two quantities describing the same attribute.",
+      note: "Texas extends ratio understanding to prediction and comparison applications in the same standard."
+    },
+    ca: {
+      code: "6.RP.1",
+      title: "Understand Ratios",
+      desc: "Understand the concept of a ratio and use ratio language to describe a ratio relationship between two quantities. (Identical to CCSS 6.RP.A.1.)",
+      note: "California mirrors CCSS."
+    }
+  },
+  {
+    code: "MA.6.AR.1.2",
+    title: "Apply Ratios to Solve Problems",
+    desc: "Given a mathematical or real-world context, apply understanding of ratios to solve problems involving ratios and rates.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "6.RP.A.3",
+      title: "Use Ratio & Rate Reasoning",
+      desc: "Use ratio and rate reasoning to solve real-world and mathematical problems, e.g., by reasoning about tables of equivalent ratios, tape diagrams, double number line diagrams, or equations.",
+      note: "CCSS 6.RP.A.3 is a rich cluster standard; Florida's MA.6.AR.1.2 captures the core problem-solving component."
+    },
+    tx: {
+      code: "6.4D / 6.4E",
+      title: "Ratios & Rate Reasoning",
+      desc: "6.4D: Give examples of ratios as multiplicative comparisons and use ratio/rate reasoning with tables and graphs. 6.4E: Represent ratios and percents with concrete models, fractions, and decimals.",
+      note: "Texas is aligned; spreads the content across more sub-standards."
+    },
+    ca: {
+      code: "6.RP.3",
+      title: "Ratio & Rate Reasoning",
+      desc: "Use ratio and rate reasoning to solve real-world and mathematical problems. California frameworks add emphasis on using tape diagrams and double number lines as visual tools.",
+      note: "California is identical to CCSS with explicit instructional tool recommendations."
+    }
+  },
+  {
+    code: "MA.6.AR.1.3",
+    title: "Unit Rates with Fractional Quantities",
+    desc: "Given a real-world context, calculate unit rates for ratios involving fractions with units of measure, including rates such as miles per hour and price per item.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "6.RP.A.2 / 6.RP.A.3b",
+      title: "Unit Rates; Fractions",
+      desc: "6.RP.A.2: Understand the concept of a unit rate a/b associated with a ratio a:b. 6.RP.A.3b: Solve unit rate problems including those involving unit pricing and constant speed.",
+      note: "Florida explicitly mentions fractions in the ratio; CCSS introduces fraction rates more explicitly in 7.RP.A.1."
+    },
+    tx: {
+      code: "6.4D",
+      title: "Unit Rates",
+      desc: "Apply mathematical process standards to use ratio and rate reasoning. Texas addresses unit rates with fractions more explicitly in Grade 7 (7.4B).",
+      note: "Florida accelerates fractional unit rates into Grade 6; Texas places this emphasis in Grade 7."
+    },
+    ca: {
+      code: "6.RP.2 / 6.RP.3b",
+      title: "Unit Rates",
+      desc: "6.RP.2: Understand unit rate a/b. 6.RP.3b: Solve unit rate problems. California follows CCSS; fractional unit rates with full formalization appear in 7.RP.1.",
+      note: "Same acceleration consideration as with CCSS."
+    }
+  },
+
+  // ── Q2 · Algebraic Reasoning ─────────────────────────────────────────────────
+  {
+    code: "MA.6.AR.2.1",
+    title: "Write & Interpret Algebraic Expressions",
+    desc: "Given a mathematical or real-world context, translate written descriptions into algebraic expressions and translate algebraic expressions into written descriptions.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "6.EE.A.2a / 6.EE.B.6",
+      title: "Write & Read Algebraic Expressions",
+      desc: "6.EE.A.2a: Write expressions that record operations with numbers and letters standing for numbers. 6.EE.B.6: Use variables to represent numbers and write an expression when solving a real-world problem.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.7A / 6.7B",
+      title: "Algebraic Expressions",
+      desc: "6.7A: Generate equivalent numerical expressions using order of operations. 6.7B: Distinguish between expressions and equations verbally, numerically, and algebraically.",
+      note: "Texas separates the expression/equation distinction as its own standard."
+    },
+    ca: {
+      code: "6.EE.2a / 6.EE.6",
+      title: "Write & Read Algebraic Expressions",
+      desc: "Identical to CCSS. California frameworks emphasize connecting verbal descriptions to symbolic notation as a language-development activity.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.AR.2.2",
+    title: "Translate to Algebraic Inequalities",
+    desc: "Translate a written description into an algebraic inequality in the form x > a, x < a, x ≥ a, or x ≤ a and represent the solution on a number line.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "6.EE.B.8",
+      title: "Write & Graph Inequalities",
+      desc: "Write an inequality of the form x > c or x < c to represent a constraint or condition in a real-world or mathematical problem. Recognize inequalities have infinitely many solutions; represent solutions on a number line.",
+      note: "Florida extends CCSS by explicitly including ≥ and ≤ in Grade 6; CCSS uses strict inequalities primarily."
+    },
+    tx: {
+      code: "6.9A / 6.10A",
+      title: "Inequalities",
+      desc: "6.9A: Write one-variable, one-step equations and inequalities to represent constraints or conditions within problems. 6.10A: Graph the solution set of linear inequalities on a number line.",
+      note: "Texas aligns closely; keeps equations and inequalities together."
+    },
+    ca: {
+      code: "6.EE.8",
+      title: "Write & Graph Inequalities",
+      desc: "Identical to CCSS 6.EE.B.8. California adds emphasis on using inequalities to model real-world constraints.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.AR.2.3",
+    title: "Evaluate Algebraic Expressions",
+    desc: "Evaluate algebraic expressions using substitution and order of operations, including expressions with whole-number exponents.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "6.EE.A.2c",
+      title: "Evaluate Expressions",
+      desc: "Evaluate expressions at specific values of their variables. Include expressions that arise from formulas used in real-world problems.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.7A / 6.7C",
+      title: "Evaluate Expressions; Determine if a Value Makes an Equation True",
+      desc: "6.7A: Generate equivalent numerical expressions using order of operations. 6.7C: Determine if two expressions are equivalent using concrete models, pictorial models, and algebraic representations.",
+      note: "Texas combines evaluation with equivalence checking."
+    },
+    ca: {
+      code: "6.EE.2c",
+      title: "Evaluate Expressions",
+      desc: "Identical to CCSS. California frameworks include performance expectations that connect formula evaluation to science and other cross-curricular contexts.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.AR.2.4",
+    title: "Equivalent Algebraic Expressions",
+    desc: "Apply the properties of operations (commutative, associative, distributive) to generate equivalent algebraic expressions with integer coefficients.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "6.EE.A.3 / 6.EE.A.4",
+      title: "Apply Properties; Identify Equivalent Expressions",
+      desc: "6.EE.A.3: Apply properties of operations to generate equivalent expressions. 6.EE.A.4: Identify when two expressions are equivalent.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.7C / 6.7D",
+      title: "Equivalent Expressions",
+      desc: "6.7C: Determine if two expressions are equivalent. 6.7D: Generate equivalent expressions using the properties of operations: inverse, identity, commutative, associative, and distributive properties.",
+      note: "Texas explicitly names all five properties."
+    },
+    ca: {
+      code: "6.EE.3 / 6.EE.4",
+      title: "Equivalent Expressions",
+      desc: "Identical to CCSS 6.EE.A.3 and 6.EE.A.4.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.AR.3.1",
+    title: "Write & Solve One-Step Equations",
+    desc: "Given a mathematical or real-world context, write and solve one-step equations in one variable, where the variable could be on either side of the equation, with rational number solutions.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "6.EE.B.7",
+      title: "Solve One-Step Equations",
+      desc: "Solve real-world and mathematical problems by writing and solving equations of the form x + p = q and px = q for cases in which p, q, and x are all nonnegative rational numbers.",
+      note: "Florida extends CCSS by allowing the variable on either side and allowing negative rational solutions."
+    },
+    tx: {
+      code: "6.9A / 6.10A",
+      title: "One-Step Equations",
+      desc: "6.9A: Write one-variable, one-step equations to represent constraints. 6.10A: Model and solve one-variable, one-step equations and inequalities that represent problems.",
+      note: "Texas and Florida are well-aligned."
+    },
+    ca: {
+      code: "6.EE.7",
+      title: "Solve One-Step Equations",
+      desc: "Same as CCSS 6.EE.B.7 (nonneg. rational numbers). California frameworks suggest connecting equation solving to geometry formulas and real-world measurement.",
+      note: "Florida extends slightly beyond CCSS/CA by allowing negatives and variable on either side."
+    }
+  },
+  {
+    code: "MA.6.AR.3.2",
+    title: "Write & Solve One-Step Inequalities",
+    desc: "Write and solve one-step inequalities in one variable within a real-world context and represent solutions algebraically and on a number line.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "6.EE.B.8",
+      title: "Write & Graph Inequalities",
+      desc: "Write an inequality of the form x > c or x < c; recognize these have infinitely many solutions; represent solutions of inequalities on a number line diagram.",
+      note: "Aligns well; Florida extends to solving (not just writing) in Grade 6."
+    },
+    tx: {
+      code: "6.9A / 6.10B",
+      title: "One-Step Inequalities",
+      desc: "6.9A: Write one-step inequalities. 6.10B: Determine if the given value(s) make(s) an equation or inequality true.",
+      note: "Texas aligns on writing; solving is embedded in 6.10 cluster."
+    },
+    ca: {
+      code: "6.EE.8",
+      title: "Write & Graph Inequalities",
+      desc: "Identical to CCSS. California emphasizes connecting inequality solutions to real-world constraints (e.g., 'you must be at least x inches tall').",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.AR.3.4",
+    title: "Relationships on the Coordinate Plane",
+    desc: "Given a mathematical or real-world context, represent relationships between two numerical variables on a four-quadrant coordinate plane.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "6.EE.C.9",
+      title: "Represent & Analyze Relationships",
+      desc: "Use variables to represent two quantities in a real-world problem that change in relationship to one another; write an equation to express one quantity in terms of the other; analyze the relationship using tables and graphs.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.11A",
+      title: "Coordinate Plane Representations",
+      desc: "Graph points in all four quadrants using ordered pairs of rational numbers. Analyze the relationship between quantities in a table to determine if the relationship is linear and write an equation.",
+      note: "Texas connects graphing to linear relationship analysis more explicitly."
+    },
+    ca: {
+      code: "6.EE.9",
+      title: "Represent & Analyze Relationships",
+      desc: "Identical to CCSS 6.EE.C.9. California frameworks encourage use of dynamic graphing tools.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.AR.3.5",
+    title: "Proportional vs. Non-Proportional Relationships",
+    desc: "Determine if a relationship between two numerical variables is proportional or not proportional and justify the answer.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "6.RP.A.3a / 6.EE.C.9",
+      title: "Tables of Equivalent Ratios; Relationship Analysis",
+      desc: "6.RP.A.3a: Make tables of equivalent ratios, find missing values, plot pairs on a coordinate plane. 6.EE.C.9: Analyze relationships using tables and graphs.",
+      note: "CCSS treats this implicitly across two domains; Florida makes the proportional/non-proportional distinction an explicit standard."
+    },
+    tx: {
+      code: "6.4A / 6.9A",
+      title: "Proportional Relationships",
+      desc: "6.4A: Represent constant rates of change in mathematical and real-world problems given pictorial, tabular, verbal, and algebraic or graphical forms. 6.9A: Represent relationships with equations.",
+      note: "Texas aligns on proportionality; the explicit non-proportional comparison is more prominent in Grade 7 TEKS."
+    },
+    ca: {
+      code: "6.RP.3a / 6.EE.9",
+      title: "Equivalent Ratios; Relationships",
+      desc: "Same as CCSS. California frameworks explicitly ask students to distinguish proportional from non-proportional relationships when analyzing tables.",
+      note: "California aligns with Florida's intent here."
+    }
+  },
+
+  // ── Q3 · Geometry & Data ─────────────────────────────────────────────────────
+  {
+    code: "MA.6.GR.1.1",
+    title: "Coordinate Plane with Rational Numbers",
+    desc: "Extend previous understanding of the coordinate plane to plot rational-number ordered pairs in all four quadrants and on both axes; reflect across axes.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.NS.C.6b / 6.NS.C.6c",
+      title: "Rational Numbers on Coordinate Plane",
+      desc: "6.NS.C.6b: Understand signs of numbers in ordered pairs as indicating location in quadrants. 6.NS.C.6c: Find and position pairs of integers and rational numbers on a coordinate plane.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.11A",
+      title: "Graph in Four Quadrants",
+      desc: "Graph points in all four quadrants using ordered pairs of rational numbers.",
+      note: "Direct alignment."
+    },
+    ca: {
+      code: "6.NS.6b / 6.NS.6c",
+      title: "Rational Numbers on Coordinate Plane",
+      desc: "Identical to CCSS 6.NS.C.6b and 6c.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.GR.1.2",
+    title: "Distance Between Ordered Pairs",
+    desc: "Find the distances between ordered pairs, limited to the same x-coordinate or the same y-coordinate, represented on the coordinate plane.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.NS.C.8",
+      title: "Distance on Coordinate Plane",
+      desc: "Solve real-world and mathematical problems by graphing points in all four quadrants of the coordinate plane. Include use of coordinates and absolute value to find distances between points with the same first or second coordinate.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.11A",
+      title: "Distance on Coordinate Plane",
+      desc: "Graph points in all four quadrants and determine distances between two points with the same x- or y-coordinate using absolute value.",
+      note: "Direct alignment."
+    },
+    ca: {
+      code: "6.NS.8",
+      title: "Distance on Coordinate Plane",
+      desc: "Identical to CCSS 6.NS.C.8.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.GR.2.1",
+    title: "Area of Right Triangles",
+    desc: "Derive a formula for the area of a right triangle using a rectangle; solve problems involving the area of a right triangle.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.G.A.1",
+      title: "Area by Composing & Decomposing",
+      desc: "Find the area of right triangles, other triangles, special quadrilaterals, and polygons by composing into rectangles or decomposing into triangles and other shapes.",
+      note: "Florida isolates right triangles in this standard before moving to all quadrilaterals; CCSS addresses all at once in 6.G.A.1."
+    },
+    tx: {
+      code: "6.8B",
+      title: "Area of Polygons",
+      desc: "Model the relationship between the linear dimensions of a figure and its area, including figures composed of triangles, rectangles, and quadrilaterals.",
+      note: "Texas addresses triangles within a broader polygon area standard."
+    },
+    ca: {
+      code: "6.G.1",
+      title: "Area by Composing & Decomposing",
+      desc: "Identical to CCSS 6.G.A.1.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.GR.2.2",
+    title: "Area of Quadrilaterals & Composite Figures",
+    desc: "Solve mathematical and real-world problems involving the area of quadrilaterals and composite figures by decomposing them into triangles or rectangles.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.G.A.1",
+      title: "Area by Composing & Decomposing",
+      desc: "Find the area of right triangles, other triangles, special quadrilaterals, and polygons by composing into rectangles or decomposing into triangles and other shapes; apply these techniques in the context of solving real-world problems.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.8B / 6.8D",
+      title: "Area of Quadrilaterals & Composite Figures",
+      desc: "6.8B: Find area of triangles and quadrilaterals. 6.8D: Determine solutions using properties of similar figures (extended in composite contexts).",
+      note: "Texas aligns well."
+    },
+    ca: {
+      code: "6.G.1",
+      title: "Area by Composing & Decomposing",
+      desc: "Identical to CCSS 6.G.A.1.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.GR.2.3",
+    title: "Volume of Rectangular Prisms",
+    desc: "Solve mathematical and real-world problems involving the volume of right rectangular prisms with positive edge lengths.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.G.A.2",
+      title: "Volume with Fractions",
+      desc: "Find the volume of a right rectangular prism with fractional edge lengths by packing it with unit cubes of the appropriate unit fraction edge lengths. Apply the formulas V = lwh and V = Bh.",
+      note: "CCSS explicitly requires fractional edge lengths and packing model; Florida emphasizes formula application."
+    },
+    tx: {
+      code: "6.8B / 7.9A",
+      title: "Volume",
+      desc: "6.8B includes volume concepts; formal prism volume is more explicitly developed in 7.9A in Texas.",
+      note: "Volume of prisms appears across grades in Texas; more explicitly in Grade 7."
+    },
+    ca: {
+      code: "6.G.2",
+      title: "Volume with Fractions",
+      desc: "Identical to CCSS 6.G.A.2, including the packing-with-unit-cubes approach for fractional edge lengths.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.GR.2.4",
+    title: "Surface Area Using Nets",
+    desc: "Given a mathematical or real-world context, find the surface area of right rectangular prisms and right rectangular pyramids using the figure's net.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.G.A.4",
+      title: "Surface Area with Nets",
+      desc: "Represent three-dimensional figures using nets made up of rectangles and triangles, and use the nets to find the surface area of these figures.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.8C",
+      title: "Surface Area with Nets",
+      desc: "Write equations that represent problems related to the area of rectangles, parallelograms, trapezoids, and triangles; use models to determine the surface area of prisms.",
+      note: "Texas aligns on the net approach for surface area."
+    },
+    ca: {
+      code: "6.G.4",
+      title: "Surface Area with Nets",
+      desc: "Identical to CCSS 6.G.A.4.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.DP.1.1",
+    title: "Statistical Questions",
+    desc: "Recognize and formulate a statistical question that would generate numerical data.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.SP.A.1",
+      title: "Recognize Statistical Questions",
+      desc: "Recognize a statistical question as one that anticipates variability in the data related to the question and accounts for variability in the answers.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.12A",
+      title: "Statistical Questions & Data Displays",
+      desc: "Represent data using dot plots, stem-and-leaf plots, histograms, and box plots and use the display to describe key attributes of data. Texas blends the 'statistical question' concept into the broader data/statistics strand.",
+      note: "Texas does not isolate statistical questions as a standalone standard in Grade 6 the way CCSS and Florida do."
+    },
+    ca: {
+      code: "6.SP.1",
+      title: "Recognize Statistical Questions",
+      desc: "Identical to CCSS 6.SP.A.1.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.DP.1.2",
+    title: "Mean, Median, Mode & Range",
+    desc: "Given a numerical data set within a real-world context, find and interpret mean, median, mode, and range.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.SP.A.2 / 6.SP.B.5c",
+      title: "Center, Spread & Summary Statistics",
+      desc: "6.SP.A.2: Understand a data set has a distribution described by center, spread, and overall shape. 6.SP.B.5c: Give quantitative measures of center (median, mean) and variability (IQR, MAD).",
+      note: "Florida explicitly names mode and range; CCSS focuses on mean, median, IQR, and MAD in 6th grade."
+    },
+    tx: {
+      code: "6.12C",
+      title: "Summary Statistics",
+      desc: "Summarize numeric data with numerical summaries including the mean and median (measures of center) and the range and interquartile range (IQR) (measures of spread); and use these summaries to describe center and spread.",
+      note: "Texas aligns closely; does not include mode as a named measure in 6th grade."
+    },
+    ca: {
+      code: "6.SP.2 / 6.SP.5c",
+      title: "Center & Spread",
+      desc: "Identical to CCSS. California frameworks do address mean, median, and mode in context, though mode is not always explicitly named in the standard language.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.DP.1.3",
+    title: "Box Plots & Quartiles",
+    desc: "Given a box plot within a real-world context, determine the minimum, lower quartile, median, upper quartile, and maximum; calculate and interpret the interquartile range.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.SP.B.4 / 6.SP.B.5",
+      title: "Display & Summarize Data",
+      desc: "6.SP.B.4: Display numerical data in plots on a number line, including dot plots, histograms, and box plots. 6.SP.B.5: Summarize and describe distributions; report on the number of observations; describe the nature of the attribute; give measures of center and variability.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.12A / 6.12B",
+      title: "Box Plots & Data Analysis",
+      desc: "6.12A: Represent data using box plots. 6.12B: Use mean, median, mode, and range to describe data and make decisions about real-world situations.",
+      note: "Direct alignment."
+    },
+    ca: {
+      code: "6.SP.4 / 6.SP.5",
+      title: "Display & Summarize Data",
+      desc: "Identical to CCSS 6.SP.B.4 and 6.SP.B.5.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.DP.1.4",
+    title: "Histograms & Line Plots",
+    desc: "Given a histogram or line plot within a real-world context, qualitatively assess and interpret the data distribution in terms of shape, center, and spread.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.SP.B.4 / 6.SP.B.5d",
+      title: "Describe Distributions",
+      desc: "6.SP.B.4: Display numerical data in plots including histograms. 6.SP.B.5d: Relate the choice of measures of center and variability to the shape of the data distribution and the context.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "6.12A / 6.13A",
+      title: "Data Displays & Interpretation",
+      desc: "6.12A: Represent data with histograms and describe key attributes. 6.13A: Interpret numeric data in a real-world context.",
+      note: "Direct alignment."
+    },
+    ca: {
+      code: "6.SP.4 / 6.SP.5d",
+      title: "Describe Distributions",
+      desc: "Identical to CCSS. California frameworks include an emphasis on connecting shape descriptions (skewed, symmetric) to real-world data context.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.6.DP.1.5",
+    title: "Create Box Plots & Histograms",
+    desc: "Create box plots and histograms to represent sets of numerical data within real-world contexts; choose an appropriate type of display.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.SP.B.4",
+      title: "Display Numerical Data",
+      desc: "Display numerical data in plots on a number line, including dot plots, histograms, and box plots.",
+      note: "Direct alignment; CCSS also includes dot plots."
+    },
+    tx: {
+      code: "6.12A",
+      title: "Represent Data with Displays",
+      desc: "Represent sets of data using dot plots, stem-and-leaf plots, histograms, and box plots. Texas includes stem-and-leaf plots in Grade 6.",
+      note: "Texas adds stem-and-leaf plots to Grade 6 data displays."
+    },
+    ca: {
+      code: "6.SP.4",
+      title: "Display Numerical Data",
+      desc: "Identical to CCSS 6.SP.B.4. California frameworks recommend including line plots and stem-and-leaf plots as additional display options.",
+      note: "Same as CCSS; slight addition in frameworks."
+    }
+  }
+], // end Grade 6
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  GRADE 7
+// ══════════════════════════════════════════════════════════════════════════════
+7: [
+  // ── Q1 ───────────────────────────────────────────────────────────────────────
+  {
+    code: "MA.7.NSO.1.1",
+    title: "Add & Subtract Rational Numbers",
+    desc: "Know and apply rules for adding and subtracting integers, positive and negative fractions, and positive and negative decimals, including in real-world contexts.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "7.NS.A.1", title: "Add & Subtract Rational Numbers", desc: "Apply and extend previous understandings of addition and subtraction to add and subtract rational numbers. Understand addition of rational numbers: p + q is the number located a distance |q| from p. Interpret sums of rational numbers in context.", note: "Direct alignment." },
+    tx: { code: "7.3A", title: "Add & Subtract Rational Numbers", desc: "Add, subtract, multiply, and divide rational numbers fluently.", note: "Texas combines all four operations into one standard (7.3A); Florida separates addition/subtraction (NSO.1.1) from multiplication/division (NSO.1.2)." },
+    ca: { code: "7.NS.1", title: "Add & Subtract Rational Numbers", desc: "Identical to CCSS 7.NS.A.1, including the number-line interpretation of addition and subtraction.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.NSO.1.2",
+    title: "Multiply & Divide Rational Numbers",
+    desc: "Know and apply rules for multiplying and dividing integers, positive and negative fractions, and positive and negative decimals, including in real-world contexts.",
+    quarters: ["Q1","PM3"],
+    nat: { code: "7.NS.A.2", title: "Multiply & Divide Rational Numbers", desc: "Apply and extend previous understandings of multiplication and division to multiply and divide rational numbers. Understand that multiplication is extended from fractions to rational numbers by requiring that operations continue to satisfy the properties of operations.", note: "Direct alignment." },
+    tx: { code: "7.3A / 7.3B", title: "Multiply & Divide Rational Numbers", desc: "7.3A: Fluently multiply and divide rational numbers. 7.3B: Apply and extend previous understandings of operations to solve problems using addition, subtraction, multiplication, and division of rational numbers.", note: "Texas aligns; keeps all four operations together." },
+    ca: { code: "7.NS.2", title: "Multiply & Divide Rational Numbers", desc: "Identical to CCSS 7.NS.A.2.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.NSO.2.2",
+    title: "Rational Number Operations — Procedural Fluency",
+    desc: "Add, subtract, multiply, and divide rational numbers — including integers, positive and negative fractions, and decimals — with procedural fluency.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "7.NS.A.1d / 7.NS.A.2c",
+      title: "Rational Number Operations",
+      desc: "7.NS.A.1d: Apply properties of operations to add and subtract rational numbers. 7.NS.A.2c: Apply properties of operations to multiply and divide rational numbers; convert between equivalent fraction forms.",
+      note: "CCSS separates the conceptual understanding (7.NS.A.1–2) from fluency; Florida's MA.7.NSO.2.2 is the fluency target that follows the conceptual work in NSO.1.1–1.2."
+    },
+    tx: {
+      code: "7.3A",
+      title: "Fluent Rational Number Operations",
+      desc: "Add, subtract, multiply, and divide rational numbers fluently.",
+      note: "Texas aligns directly — 7.3A covers all four operations with rational numbers as a unified fluency standard."
+    },
+    ca: {
+      code: "7.NS.1d / 7.NS.2c",
+      title: "Rational Number Operations",
+      desc: "Identical to CCSS 7.NS.A.1d and 7.NS.A.2c. California frameworks treat these as fluency extensions of the conceptual standards introduced earlier.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.7.NSO.2.3",
+    title: "Real-World Problems with Rational Numbers",
+    desc: "Solve real-world and mathematical problems involving any of the four operations with rational numbers, including multi-step problems with integers, fractions, and decimals.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "7.NS.A.3",
+      title: "Solve Real-World Problems with Rational Numbers",
+      desc: "Solve real-world and mathematical problems involving the four operations with rational numbers. (Computations with rational numbers extend the rules for manipulating fractions to complex fractions.)",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "7.3B",
+      title: "Real-World Rational Number Problems",
+      desc: "Apply and extend previous understandings of operations to solve problems using addition, subtraction, multiplication, and division of rational numbers.",
+      note: "Direct alignment."
+    },
+    ca: {
+      code: "7.NS.3",
+      title: "Solve Real-World Problems with Rational Numbers",
+      desc: "Identical to CCSS 7.NS.A.3. California frameworks require multi-step problems that combine all four operations with rational numbers in authentic contexts (e.g., financial scenarios, measurement).",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.7.DP.2.1",
+    title: "Sample Space for Simple Experiments",
+    desc: "Determine the sample space for a simple experiment; represent it using lists, tables, and tree diagrams; identify equally likely outcomes.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "7.SP.C.5 / 7.SP.C.8a",
+      title: "Probability & Sample Space",
+      desc: "7.SP.C.5: Understand that the probability of a chance event is a number between 0 and 1; larger numbers indicate greater likelihood. 7.SP.C.8a: Understand that the probability of a compound event is the fraction of outcomes in the sample space.",
+      note: "CCSS addresses sample space within the compound events cluster; Florida isolates it as an explicit introductory standard."
+    },
+    tx: {
+      code: "7.6A",
+      title: "Sample Space",
+      desc: "Represent sample spaces for simple and compound events using lists, tables, tree diagrams, and simulation.",
+      note: "Direct alignment."
+    },
+    ca: {
+      code: "7.SP.5 / 7.SP.8a",
+      title: "Probability & Sample Space",
+      desc: "Identical to CCSS 7.SP.C.5 and 7.SP.C.8a. California frameworks emphasize using organized lists and tree diagrams before moving to formal probability rules.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.7.DP.2.2",
+    title: "Interpret & Compare Probabilities",
+    desc: "Given the probability of a chance event, interpret the likelihood of the event occurring. Compare the probabilities of two or more chance events and use probability language (impossible, unlikely, equally likely, likely, certain).",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "7.SP.C.5",
+      title: "Probability as a Number 0–1",
+      desc: "Understand that the probability of a chance event is a number between 0 and 1 that expresses the likelihood of the event occurring. Probabilities near 0 indicate unlikely events; probabilities near 1 indicate likely events.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "7.6B",
+      title: "Compare Probabilities",
+      desc: "Select and use different simulations to represent simple and compound events with and without technology; use each simulation to find the experimental probability and compare results to theoretical probability.",
+      note: "Texas addresses probability language and comparison within the broader simulation standard."
+    },
+    ca: {
+      code: "7.SP.5",
+      title: "Probability as a Number 0–1",
+      desc: "Identical to CCSS 7.SP.C.5.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.7.DP.2.3",
+    title: "Theoretical Probability of Simple Events",
+    desc: "Find the theoretical probability of a simple event and represent it as a fraction, decimal, and percentage. Find the probability of the complement of an event.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "7.SP.C.7a",
+      title: "Uniform Probability Models",
+      desc: "Develop a uniform probability model by assigning equal probability to all outcomes, and use the model to determine probabilities of events.",
+      note: "Direct alignment; Florida explicitly includes complementary events and multiple representations (fraction, decimal, percent)."
+    },
+    tx: {
+      code: "7.6C / 7.6D",
+      title: "Theoretical Probability",
+      desc: "7.6C: Make predictions and determine solutions using theoretical probability for simple and compound events. 7.6D: Calculate experimental probability using data from a real-world or mathematical problem.",
+      note: "Texas combines theoretical and experimental probability in these standards."
+    },
+    ca: {
+      code: "7.SP.7a",
+      title: "Uniform Probability Models",
+      desc: "Identical to CCSS 7.SP.C.7a. California frameworks additionally require expressing probability as a percent and connecting to ratio concepts.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.7.DP.2.4",
+    title: "Experimental Probability & Simulations",
+    desc: "Use a simulation — physical or digital — to approximate the probability of a chance event; compare experimental probability to theoretical probability and explain any discrepancies; recognize that increasing sample size brings experimental probability closer to theoretical probability.",
+    quarters: ["Q1","PM3"],
+    nat: {
+      code: "7.SP.C.6 / 7.SP.C.8c",
+      title: "Experimental Probability & Simulations",
+      desc: "7.SP.C.6: Approximate the probability of a chance event by collecting data; observe that larger sample sizes produce probabilities closer to theoretical probability. 7.SP.C.8c: Design and use a simulation to generate frequencies for compound events.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "7.6D / 7.6E",
+      title: "Experimental Probability & Simulation",
+      desc: "7.6D: Calculate experimental probability using data from a real-world or mathematical problem. 7.6E: Find the probabilities of a simple event and its complement and describe the relationship between the two.",
+      note: "Texas aligns; simulation is embedded in 7.6D and 7.6E."
+    },
+    ca: {
+      code: "7.SP.6 / 7.SP.8c",
+      title: "Experimental Probability & Simulations",
+      desc: "Identical to CCSS 7.SP.C.6 and 7.SP.C.8c. California frameworks recommend both physical (coin flip, spinner) and digital simulations.",
+      note: "Same as CCSS."
+    }
+  },
+
+  {
+    code: "MA.7.AR.1.1",
+    title: "Identify Proportional Relationships",
+    desc: "Apply understanding of ratios and rates to represent proportional relationships between quantities, including through tables, graphs, and equations (y = kx).",
+    quarters: ["Q3","PM3"],
+    nat: { code: "7.RP.A.2", title: "Recognize & Represent Proportional Relationships", desc: "Recognize and represent proportional relationships between quantities. Decide whether two quantities are in a proportional relationship (e.g., by testing equivalent ratios in a table or graphing).", note: "Direct alignment." },
+    tx: { code: "7.4A", title: "Proportional Relationships", desc: "Represent constant rates of change in mathematical and real-world problems given pictorial, tabular, verbal, and algebraic or graphical forms, including d = rt.", note: "Texas frames proportional relationships through constant rate of change (slope)." },
+    ca: { code: "7.RP.2", title: "Recognize & Represent Proportional Relationships", desc: "Identical to CCSS 7.RP.A.2. California frameworks require connecting proportional relationships to unit rate and slope.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.AR.1.2",
+    title: "Constant of Proportionality",
+    desc: "Determine the constant of proportionality (k) within a proportional relationship, including from a table, graph, equation, or verbal description.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "7.RP.A.2b / 7.RP.A.2c", title: "Constant of Proportionality", desc: "7.RP.A.2b: Identify the constant of proportionality (unit rate) in tables, graphs, equations, diagrams, and verbal descriptions. 7.RP.A.2c: Represent proportional relationships by equations.", note: "Direct alignment." },
+    tx: { code: "7.4A / 7.4C", title: "Constant of Proportionality", desc: "7.4A: Identify constant rates of change. 7.4C: Determine the constant of proportionality within mathematical and real-world problems.", note: "Direct alignment." },
+    ca: { code: "7.RP.2b / 7.RP.2c", title: "Constant of Proportionality", desc: "Identical to CCSS. California frameworks emphasize connecting k to real-world unit rates (e.g., $/item, miles/hour).", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.AR.1.3",
+    title: "Solve Proportional Relationship Problems",
+    desc: "Solve multi-step mathematical and real-world problems involving ratios, rates, and proportional relationships, including percent problems.",
+    quarters: [],
+    nat: { code: "7.RP.A.1 / 7.RP.A.3", title: "Ratios & Percent", desc: "7.RP.A.1: Compute unit rates associated with ratios of fractions. 7.RP.A.3: Use proportional relationships to solve multi-step ratio and percent problems.", note: "Direct alignment." },
+    tx: { code: "7.4B / 7.4D", title: "Ratios, Rates & Percents", desc: "7.4B: Calculate unit rates from rates in mathematical and real-world problems. 7.4D: Solve problems involving ratios, rates, and percents.", note: "Direct alignment." },
+    ca: { code: "7.RP.1 / 7.RP.3", title: "Ratios & Percent", desc: "Identical to CCSS 7.RP.A.1 and 7.RP.A.3.", note: "Same as CCSS." }
+  },
+
+  // ── Q2 ───────────────────────────────────────────────────────────────────────
+  {
+    code: "MA.7.AR.2.1",
+    title: "Algebraic Expressions with Rational Coefficients",
+    desc: "Write and evaluate algebraic expressions in several variables with rational-number coefficients, including expressions with parentheses; apply properties of operations.",
+    quarters: [],
+    nat: { code: "7.EE.A.1 / 7.EE.A.2", title: "Expressions & Rewriting", desc: "7.EE.A.1: Apply properties of operations as strategies to add, subtract, factor, and expand linear expressions with rational coefficients. 7.EE.A.2: Rewrite an expression in different forms.", note: "Direct alignment." },
+    tx: { code: "7.7A", title: "Algebraic Expressions", desc: "Represent linear relationships using verbal descriptions, tables, graphs, and equations that simplify to y = mx + b.", note: "Texas moves expression work into the linear-relationship context." },
+    ca: { code: "7.EE.1 / 7.EE.2", title: "Expressions & Rewriting", desc: "Identical to CCSS 7.EE.A.1 and 7.EE.A.2.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.AR.2.2",
+    title: "Write & Solve Two-Step Equations",
+    desc: "Write and solve two-step equations in one variable within a mathematical or real-world context, where all terms are rational numbers.",
+    quarters: [],
+    nat: { code: "7.EE.B.4a", title: "Two-Step Equations", desc: "Solve word problems leading to equations of the form px + q = r and p(x + q) = r, where p, q, and r are specific rational numbers. Compare algebraic solution to arithmetic solution.", note: "Direct alignment." },
+    tx: { code: "7.10A", title: "Two-Step Equations", desc: "Write one-variable, two-step equations and inequalities to represent constraints or conditions within problems. Solve equations of the form px + q = r and p(x + q) = r.", note: "Direct alignment." },
+    ca: { code: "7.EE.4a", title: "Two-Step Equations", desc: "Identical to CCSS 7.EE.B.4a. California frameworks encourage students to check answers using substitution and estimation.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.AR.2.3",
+    title: "Write & Solve Two-Step Inequalities",
+    desc: "Write and solve two-step inequalities in one variable within a real-world context; represent solutions algebraically and on a number line.",
+    quarters: [],
+    nat: { code: "7.EE.B.4b", title: "Two-Step Inequalities", desc: "Solve word problems leading to inequalities of the form px + q > r or px + q < r; graph the solution set and interpret in context.", note: "Direct alignment." },
+    tx: { code: "7.10A / 7.10B", title: "Two-Step Inequalities", desc: "7.10A: Write two-step inequalities. 7.10B: Represent solutions for one-variable, two-step equations and inequalities on number lines.", note: "Direct alignment." },
+    ca: { code: "7.EE.4b", title: "Two-Step Inequalities", desc: "Identical to CCSS 7.EE.B.4b.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.AR.3.1",
+    title: "Percent Problems",
+    desc: "Solve multi-step real-world problems involving percent, including tax, tip, discount, markup, simple interest, and percent of change.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "7.RP.A.3", title: "Multi-Step Percent Problems", desc: "Use proportional relationships to solve multi-step ratio and percent problems, e.g., simple interest, tax, markups/markdowns, gratuities, commissions, fees, percent increase/decrease, percent error.", note: "Direct alignment." },
+    tx: { code: "7.4D / 7.13A / 7.13B", title: "Percent & Financial Literacy", desc: "7.4D: Solve problems involving ratios, rates, and percents. 7.13A/B: Financial literacy standards for simple interest, markup, and discount.", note: "Texas places financial applications of percent in both the math and financial literacy strands." },
+    ca: { code: "7.RP.3", title: "Multi-Step Percent Problems", desc: "Identical to CCSS 7.RP.A.3.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.AR.3.2",
+    title: "Simple & Compound Interest",
+    desc: "Apply formulas for simple interest and compound interest to solve mathematical and real-world problems.",
+    quarters: [],
+    nat: { code: "7.RP.A.3 (extension)", title: "Percent & Interest", desc: "CCSS 7.RP.A.3 mentions simple interest; compound interest is formally introduced in high school (HSF-LE). Florida introduces compound interest in Grade 7.", note: "Florida accelerates compound interest into Grade 7; CCSS formally addresses it in high school." },
+    tx: { code: "7.13B", title: "Simple & Compound Interest", desc: "Calculate and compare simple interest and compound interest earnings; contrast savings options.", note: "Texas aligns; compound interest appears in financial literacy standards." },
+    ca: { code: "7.RP.3 / CA 7.NS.3 extension", title: "Interest", desc: "California follows CCSS; simple interest is included in 7.RP.3. Compound interest is typically introduced in 8th grade or high school in CA frameworks.", note: "Florida introduces compound interest earlier than CCSS and CA." }
+  },
+  {
+    code: "MA.7.AR.3.3",
+    title: "Percent Change & Multi-Step Financial Problems",
+    desc: "Solve multi-step mathematical and real-world problems involving percent of change, including percent increase and percent decrease; find the original amount, the new amount, or the percent of change. Apply to real-world contexts such as discounts, markups, gratuities, and price changes.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "7.RP.A.3",
+      title: "Multi-Step Percent Problems",
+      desc: "Use proportional relationships to solve multi-step ratio and percent problems, including percent increase, percent decrease, tax, markups, markdowns, gratuities, commissions, fees, and percent error.",
+      note: "CCSS 7.RP.A.3 bundles all percent applications (tax, tip, markup, percent change) into a single standard. Florida separates the simpler applications (MA.7.AR.3.1) from the more complex multi-step percent-of-change problems (MA.7.AR.3.3)."
+    },
+    tx: {
+      code: "7.4D",
+      title: "Ratios, Rates & Percents",
+      desc: "Solve problems involving ratios, rates, and percents, including multi-step problems involving percent of change and markup/markdown.",
+      note: "Direct alignment."
+    },
+    ca: {
+      code: "7.RP.3",
+      title: "Multi-Step Percent Problems",
+      desc: "Identical to CCSS 7.RP.A.3. California frameworks emphasize connecting percent change to real-world contexts such as sales tax, tips, and price fluctuations.",
+      note: "Same as CCSS."
+    }
+  },
+
+  // ── Q3 ───────────────────────────────────────────────────────────────────────
+  {
+    code: "MA.7.GR.1.1",
+    title: "Angle Relationships",
+    desc: "Solve problems involving complementary, supplementary, vertical, and adjacent angles, including writing and solving equations to find unknown angle measures.",
+    quarters: ["Q2","PM3"],
+    nat: { code: "7.G.B.5", title: "Angle Relationships", desc: "Use facts about supplementary, complementary, vertical, and adjacent angles in a multi-step problem to write and solve simple equations for an unknown angle in a figure.", note: "Direct alignment." },
+    tx: { code: "7.11C", title: "Angle Relationships", desc: "Write and solve equations using geometry concepts, including the sum of angles in a triangle, supplementary, complementary, vertical, and adjacent angles.", note: "Direct alignment; Texas also explicitly includes triangle angle sum." },
+    ca: { code: "7.G.5", title: "Angle Relationships", desc: "Identical to CCSS 7.G.B.5.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.GR.1.2",
+    title: "Scale Drawings",
+    desc: "Solve mathematical and real-world problems involving scale drawings, including creating scale drawings and computing actual dimensions and lengths.",
+    quarters: ["Q2","PM3"],
+    nat: { code: "7.G.A.1", title: "Scale Drawings", desc: "Solve problems involving scale drawings of geometric figures, including computing actual lengths and areas from a scale drawing and reproducing a scale drawing at a different scale.", note: "Direct alignment." },
+    tx: { code: "7.5A / 7.5B / 7.5C", title: "Similarity & Scale", desc: "7.5A: Generalize the critical attributes of similarity, including ratios within and between similar shapes. 7.5B: Describe the relationship between the linear dimensions, area, and volume of similar figures. 7.5C: Use units to find scale factors.", note: "Texas embeds scale drawings inside a broader similarity framework." },
+    ca: { code: "7.G.1", title: "Scale Drawings", desc: "Identical to CCSS 7.G.A.1. California frameworks explicitly require map-reading and blueprint contexts.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.GR.1.3",
+    title: "Triangle Angle Sum",
+    desc: "Solve mathematical and real-world problems using the triangle angle sum theorem — the sum of the interior angles of any triangle equals 180°; write and solve equations to determine unknown angle measures in triangles.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "8.G.A.5",
+      title: "Angle Relationships — Triangles",
+      desc: "Use informal arguments to establish facts about the angle sum and exterior angle of triangles, and the angle-angle criterion for similarity of triangles.",
+      note: "CCSS places the triangle angle sum theorem in Grade 8; Florida introduces it in Grade 7 — an acceleration of one year."
+    },
+    tx: {
+      code: "7.11C",
+      title: "Angle Relationships",
+      desc: "Write and solve equations using geometry concepts, including the sum of angles in a triangle, supplementary, complementary, vertical, and adjacent angles.",
+      note: "Direct alignment — Texas explicitly teaches triangle angle sum at Grade 7."
+    },
+    ca: {
+      code: "8.G.5",
+      title: "Angle Relationships — Triangles",
+      desc: "Use informal arguments to establish facts about the angle sum and exterior angle of triangles. California, following CCSS, places this at Grade 8.",
+      note: "Florida accelerates this topic to Grade 7; California and CCSS address it in Grade 8."
+    }
+  },
+  {
+    code: "MA.7.GR.1.4",
+    title: "Triangle Inequality & Construction Conditions",
+    desc: "Determine whether three given side lengths or angle measures can form a triangle; apply the triangle inequality theorem (the sum of any two side lengths must be greater than the third) and identify when conditions produce a unique triangle, multiple triangles, or no triangle.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "7.G.A.2",
+      title: "Draw Geometric Shapes with Given Conditions",
+      desc: "Draw geometric shapes with given conditions. Focus on constructing triangles from three measures of angles or sides, noticing when the conditions determine a unique triangle, more than one triangle, or no triangle.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "7.11A",
+      title: "Represent Three-Dimensional Geometric Figures",
+      desc: "Model the relationship between the volume of a rectangular prism and a rectangular pyramid having the same base area and height.",
+      note: "Texas does not have a direct Grade 7 standard for triangle construction conditions; this concept appears in Texas high school geometry."
+    },
+    ca: {
+      code: "7.G.2",
+      title: "Draw Geometric Shapes with Given Conditions",
+      desc: "Identical to CCSS 7.G.A.2. California frameworks additionally recommend using dynamic geometry software (e.g., GeoGebra) to explore when triangle conditions produce unique solutions.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.7.GR.1.5",
+    title: "Polygon Angle Sums",
+    desc: "Solve mathematical and real-world problems involving the sum of interior angles of polygons; use the polygon interior angle sum formula [(n − 2) × 180°] to determine unknown angle measures in regular and irregular polygons.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "8.G.A.5 (extension)",
+      title: "Polygon Angle Sums",
+      desc: "CCSS 8.G.A.5 establishes the triangle angle sum informally; the polygon angle sum formula is a natural extension treated in CCSS high school geometry (HSG-CO.C.10).",
+      note: "Florida explicitly teaches the polygon angle sum formula in Grade 7, ahead of both CCSS and most state frameworks."
+    },
+    tx: {
+      code: "7.11C",
+      title: "Angle Relationships",
+      desc: "Write and solve equations using geometry concepts, including angle relationships in triangles. Texas extends to polygon angle sums formally in high school geometry (G.5B).",
+      note: "Texas covers triangle angles at Grade 7 but addresses polygon angle sums at the high school level."
+    },
+    ca: {
+      code: "8.G.5 / HSG-CO",
+      title: "Polygon Angle Sums",
+      desc: "California follows CCSS — triangle angle sum at Grade 8, polygon angle sums in high school geometry.",
+      note: "Florida introduces polygon angle sums in Grade 7, earlier than California and CCSS."
+    }
+  },
+  {
+    code: "MA.7.GR.2.1",
+    title: "Circumference & Area of Circles",
+    desc: "Solve mathematical and real-world problems involving the circumference and area of circles using the formulas C = 2πr = πd and A = πr².",
+    quarters: [],
+    nat: { code: "7.G.B.4", title: "Circles", desc: "Know the formulas for the area and circumference of a circle and use them to solve problems; give an informal derivation of the relationship between the circumference and area of a circle.", note: "Direct alignment." },
+    tx: { code: "7.9B / 7.9C", title: "Circumference & Area of Circles", desc: "7.9B: Determine the circumference and area of circles. 7.9C: Determine the area of composite figures containing combinations of rectangles, squares, parallelograms, trapezoids, triangles, and circles.", note: "Direct alignment." },
+    ca: { code: "7.G.4", title: "Circles", desc: "Identical to CCSS 7.G.B.4. California frameworks require informal proof of the area formula (πr²) through decomposition.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.GR.2.2",
+    title: "Area of Composite Figures",
+    desc: "Solve problems involving the area of composite figures, including those with circles and semi-circles.",
+    quarters: [],
+    nat: { code: "7.G.B.6", title: "Area, Volume & Surface Area", desc: "Solve real-world and mathematical problems involving area, volume and surface area of two- and three-dimensional objects composed of triangles, quadrilaterals, polygons, cubes, and right prisms.", note: "CCSS 7.G.B.6 is broader (includes volume/SA); Florida separates area into its own standard." },
+    tx: { code: "7.9C", title: "Area of Composite Figures", desc: "Determine the area of composite figures containing combinations of rectangles, squares, parallelograms, trapezoids, triangles, and circles/semicircles.", note: "Direct alignment." },
+    ca: { code: "7.G.6", title: "Area, Volume & Surface Area", desc: "Identical to CCSS 7.G.B.6.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.GR.2.3",
+    title: "Volume & Surface Area of 3D Figures",
+    desc: "Solve mathematical and real-world problems involving volume and surface area of right prisms, right pyramids, and composite 3D figures.",
+    quarters: [],
+    nat: { code: "7.G.B.6", title: "Area, Volume & Surface Area", desc: "Solve real-world problems involving area, volume and surface area of two- and three-dimensional objects composed of triangles, quadrilaterals, polygons, cubes, and right prisms.", note: "Direct alignment." },
+    tx: { code: "7.9A / 7.9D", title: "Volume & Surface Area", desc: "7.9A: Solve problems involving the volume of triangular prisms, rectangular prisms, and composite figures. 7.9D: Solve problems involving the lateral and total surface area of a triangular prism, rectangular prism, rectangular pyramid, and triangular pyramid.", note: "Texas explicitly lists all 3D figures and distinguishes lateral vs. total surface area." },
+    ca: { code: "7.G.6", title: "Area, Volume & Surface Area", desc: "Identical to CCSS 7.G.B.6.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.DP.1.1",
+    title: "Random Sampling & Inference",
+    desc: "Determine an appropriate sample and explain how randomness in sampling helps to ensure a sample is representative of a population; use data from a random sample to make inferences about a population.",
+    quarters: [],
+    nat: { code: "7.SP.A.1 / 7.SP.A.2", title: "Random Sampling & Inference", desc: "7.SP.A.1: Understand that statistics can be used to gain information about a population by examining a random sample. 7.SP.A.2: Use data from a random sample to draw inferences about a population with an unknown characteristic.", note: "Direct alignment." },
+    tx: { code: "7.12A / 7.12B", title: "Random Samples & Predictions", desc: "7.12A: Compare two populations using data and determine bias. 7.12B: Use data from a random sample to make inferences about a population and predict with data.", note: "Direct alignment." },
+    ca: { code: "7.SP.1 / 7.SP.2", title: "Random Sampling & Inference", desc: "Identical to CCSS 7.SP.A.1 and 7.SP.A.2. California frameworks emphasize connecting to science investigations.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.7.DP.1.2",
+    title: "Compare Data Sets Using Measures of Center & Variability",
+    desc: "Given two numerical data sets of equal length, calculate and compare measures of center (mean, median) and measures of variability (range, interquartile range); interpret any differences and draw conclusions about the two populations.",
+    quarters: [],
+    nat: {
+      code: "7.SP.B.3 / 7.SP.B.4",
+      title: "Compare Two Data Distributions",
+      desc: "7.SP.B.3: Informally assess the degree of visual overlap of two numerical data distributions with similar variabilities; measure the difference between centers. 7.SP.B.4: Use measures of center and measures of variability for numerical data from random samples to draw informal comparative inferences about two populations.",
+      note: "Direct alignment."
+    },
+    tx: {
+      code: "7.12A / 7.12C",
+      title: "Compare Data Sets",
+      desc: "7.12A: Represent data using dot plots, stem-and-leaf plots, histograms, and box plots. 7.12C: Compare two groups of numeric data using comparative dot plots or box plots by comparing their shapes, centers, and spreads.",
+      note: "Direct alignment."
+    },
+    ca: {
+      code: "7.SP.3 / 7.SP.4",
+      title: "Compare Two Data Distributions",
+      desc: "Identical to CCSS 7.SP.B.3 and 7.SP.B.4. California frameworks emphasize using box plots and dot plots side-by-side for visual comparison.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.7.DP.1.3",
+    title: "Statistical Displays & Describing Distributions",
+    desc: "Given a statistical question, select and create an appropriate display (histogram, box plot, or dot plot) to represent a numerical data set; describe the shape, center, and spread of the distribution and identify any outliers.",
+    quarters: ["Q2","PM3"],
+    nat: {
+      code: "7.SP.B.4 / 6.SP.B.4–5",
+      title: "Statistical Displays",
+      desc: "7.SP.B.4: Use measures of center and variability to draw comparative inferences. Note: CCSS places most display creation in Grade 6 (6.SP.B.4); Grade 7 extends display interpretation to comparative contexts.",
+      note: "Florida's MA.7.DP.1.3 applies and deepens the display skills from Grade 6 in a Grade 7 comparative context."
+    },
+    tx: {
+      code: "7.12B / 7.12C",
+      title: "Statistical Displays & Comparison",
+      desc: "7.12B: Use data from a random sample to make inferences about a population; determine whether two populations are different. 7.12C: Compare two groups of numeric data using comparative dot plots or box plots.",
+      note: "Direct alignment."
+    },
+    ca: {
+      code: "7.SP.4",
+      title: "Statistical Displays",
+      desc: "Identical to CCSS 7.SP.B.4. California frameworks require students to justify which display is most appropriate for a given data set and question.",
+      note: "Same as CCSS."
+    }
+  },
+
+  // ── New Q3 standards ──────────────────────────────────────────────────────────
+  {
+    code: "MA.7.NSO.2.1",
+    title: "Solve Problems Using Rational Number Operations",
+    desc: "Solve multi-step mathematical and real-world problems using addition, subtraction, multiplication, and division of rational numbers, including integers, fractions, and decimals with different signs; apply properties of operations to simplify computations.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "7.NS.A.3",
+      title: "Solve Real-World Problems with Rational Numbers",
+      desc: "Solve real-world and mathematical problems involving the four operations with rational numbers. Computations with rational numbers extend the rules for manipulating fractions to complex fractions.",
+      note: "Direct alignment. CCSS places this under 7.NS.A.3 as the application standard that follows the conceptual work in 7.NS.A.1–2."
+    },
+    tx: {
+      code: "7.3B",
+      title: "Real-World Rational Number Problems",
+      desc: "Apply and extend previous understandings of operations to solve problems using addition, subtraction, multiplication, and division of rational numbers.",
+      note: "Direct alignment."
+    },
+    ca: {
+      code: "7.NS.3",
+      title: "Solve Real-World Problems with Rational Numbers",
+      desc: "Identical to CCSS 7.NS.A.3. California frameworks include multi-step problems combining all four operations with rational numbers in authentic contexts.",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.7.DP.1.4",
+    title: "Select Appropriate Measures & Interpret Data",
+    desc: "Determine the most appropriate measure of center (mean, median, or mode) and measure of variability (range or IQR) to summarize a data set and justify the selection; analyze the effect of adding or removing a data value (including outliers) on the measures of center and variability.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "6.SP.B.5c / 7.SP.B.4",
+      title: "Summarize Data & Interpret Measures",
+      desc: "6.SP.B.5c: Giving quantitative measures of center and variability, as well as describing any overall pattern and any striking deviations. 7.SP.B.4: Use measures of center and variability for numerical data from random samples to draw informal comparative inferences.",
+      note: "Florida's MA.7.DP.1.4 extends the selection and justification of appropriate measures beyond CCSS 6.SP.B.5c, adding explicit analysis of the effect of outliers — a skill CCSS addresses informally in Grade 6 and more formally in high school."
+    },
+    tx: {
+      code: "7.12A / 7.12C",
+      title: "Represent & Compare Data Sets",
+      desc: "7.12A: Represent data using dot plots, stem-and-leaf plots, histograms, and box plots and identify any overall patterns, clusters, and gaps. 7.12C: Compare two groups of numeric data using comparative dot plots or box plots by comparing their shapes, centers, and spreads.",
+      note: "Direct alignment — Texas explicitly includes analysis of outliers and their effects on measures of center."
+    },
+    ca: {
+      code: "7.SP.4",
+      title: "Summarize Data Distributions",
+      desc: "Identical to CCSS 7.SP.B.4. California frameworks additionally require students to connect the choice of measure of center to the shape of the distribution (symmetric vs. skewed).",
+      note: "Same as CCSS."
+    }
+  },
+  {
+    code: "MA.7.AR.4.5",
+    title: "Represent & Analyze Proportional & Non-Proportional Relationships",
+    desc: "Solve mathematical and real-world problems by determining whether a relationship between two quantities is proportional or non-proportional; represent the relationship using tables, graphs, and equations; interpret the constant of proportionality (unit rate) or rate of change in context and compare multiple relationships represented in different forms.",
+    quarters: ["Q3","PM3"],
+    nat: {
+      code: "7.RP.A.2 / 7.EE.B.4",
+      title: "Proportional Relationships & Equations",
+      desc: "7.RP.A.2: Recognize and represent proportional relationships between quantities; decide whether two quantities are proportional by testing equivalent ratios or graphing. 7.EE.B.4: Use variables to represent quantities in a real-world problem and construct simple equations to solve problems.",
+      note: "FL BEST MA.7.AR.4.5 integrates proportional reasoning (7.RP) with equation-writing and problem-solving (7.EE), making explicit the connection between unit rate, constant of proportionality, and linear equations."
+    },
+    tx: {
+      code: "7.4A / 7.4C / 7.7A",
+      title: "Proportional & Linear Relationships",
+      desc: "7.4A: Represent constant rates of change in mathematical and real-world problems. 7.4C: Determine the constant of proportionality. 7.7A: Represent linear relationships using verbal descriptions, tables, graphs, and equations.",
+      note: "Direct alignment — Texas explicitly ties constant of proportionality to linear representation across multiple forms."
+    },
+    ca: {
+      code: "7.RP.2 / 7.EE.4",
+      title: "Proportional Relationships & Equations",
+      desc: "Identical to CCSS 7.RP.A.2 and 7.EE.B.4. California frameworks require students to distinguish proportional from non-proportional relationships by examining whether the graph passes through the origin.",
+      note: "Same as CCSS."
+    }
+  }
+], // end Grade 7
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  GRADE 8
+// ══════════════════════════════════════════════════════════════════════════════
+8: [
+  // ── Q1 ───────────────────────────────────────────────────────────────────────
+  {
+    code: "MA.8.NSO.1.1",
+    title: "Square Roots & Cube Roots",
+    desc: "Extend previous understanding of the Laws of Exponents to generate equivalent numerical expressions. Evaluate square roots of perfect squares and cube roots of perfect cubes for values up to 10³.",
+    quarters: ["Q1","PM3"],
+    nat: { code: "8.EE.A.2", title: "Square & Cube Roots", desc: "Use square root and cube root symbols to represent solutions to equations of the form x² = p and x³ = p, where p is a positive rational number. Evaluate square roots of small perfect squares and cube roots of small perfect cubes.", note: "Direct alignment." },
+    tx: { code: "8.2B", title: "Square & Cube Roots", desc: "Approximate the value of an irrational number including π and square roots of non-perfect squares; locate on a number line.", note: "Texas combines perfect and non-perfect roots in the same standard." },
+    ca: { code: "8.EE.2", title: "Square & Cube Roots", desc: "Identical to CCSS 8.EE.A.2.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.NSO.1.2",
+    title: "Irrational Numbers",
+    desc: "Plot, order, and compare rational and irrational numbers, including approximating irrational numbers to the nearest hundredth; classify numbers as rational or irrational.",
+    quarters: ["Q1","PM3"],
+    nat: { code: "8.NS.A.1 / 8.NS.A.2", title: "Irrational Numbers", desc: "8.NS.A.1: Understand informally that every number has a decimal expansion; for rational numbers, the decimal eventually repeats. 8.NS.A.2: Use rational approximations of irrational numbers to compare their size; locate on a number line.", note: "Direct alignment." },
+    tx: { code: "8.2A / 8.2B", title: "Real Number System", desc: "8.2A: Extend previous knowledge of sets and subsets using a visual representation to describe relationships between sets of real numbers. 8.2B: Approximate irrational numbers and locate on a number line.", note: "Direct alignment." },
+    ca: { code: "8.NS.1 / 8.NS.2", title: "Irrational Numbers", desc: "Identical to CCSS 8.NS.A.1 and 8.NS.A.2. California frameworks include additional emphasis on understanding repeating decimals as fractions.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.NSO.1.3",
+    title: "Properties of Integer Exponents",
+    desc: "Extend understanding of exponent properties (product rule, quotient rule, power rule) to include negative integer exponents; generate equivalent numerical expressions.",
+    quarters: ["Q1","PM3"],
+    nat: { code: "8.EE.A.1", title: "Properties of Integer Exponents", desc: "Know and apply the properties of integer exponents to generate equivalent numerical expressions, e.g., 3² × 3⁻⁵ = 3⁻³ = 1/3³ = 1/27.", note: "Direct alignment." },
+    tx: { code: "8.2C", title: "Properties of Exponents", desc: "Evaluate expressions to identify whether equations are true or false using integer exponents; apply properties of exponents including product, quotient, power, and negative exponents.", note: "Direct alignment." },
+    ca: { code: "8.EE.1", title: "Properties of Integer Exponents", desc: "Identical to CCSS 8.EE.A.1.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.NSO.1.4",
+    title: "Scientific Notation",
+    desc: "Express numbers in scientific notation and perform multiplication and division using scientific notation; interpret scientific notation generated by technology.",
+    quarters: ["Q1","PM3"],
+    nat: { code: "8.EE.A.3 / 8.EE.A.4", title: "Scientific Notation", desc: "8.EE.A.3: Estimate very large or small quantities using scientific notation. 8.EE.A.4: Perform operations with numbers expressed in scientific notation, including with technology.", note: "Direct alignment." },
+    tx: { code: "8.2D", title: "Scientific Notation", desc: "Order a set of real numbers arising from mathematical and real-world contexts; represent numbers in scientific notation.", note: "Texas combines ordering real numbers with scientific notation in the same standard." },
+    ca: { code: "8.EE.3 / 8.EE.4", title: "Scientific Notation", desc: "Identical to CCSS 8.EE.A.3 and 8.EE.A.4.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.AR.1.1",
+    title: "Write & Solve Linear Equations",
+    desc: "Apply properties of operations to write and solve multi-step linear equations in one variable, where coefficients and solutions are rational numbers; distinguish between one solution, no solution, and infinitely many solutions.",
+    quarters: ["Q1","PM3"],
+    nat: { code: "8.EE.C.7", title: "Linear Equations in One Variable", desc: "Solve linear equations in one variable. Give examples of linear equations with one solution, infinitely many solutions, or no solutions. Solve equations with rational number coefficients.", note: "Direct alignment." },
+    tx: { code: "8.8A / 8.8B", title: "Writing & Solving Equations", desc: "8.8A: Write one-variable equations or inequalities with variables on both sides. 8.8B: Write a corresponding real-world problem when given a one-variable equation.", note: "Direct alignment; Texas adds the real-world-problem-writing component." },
+    ca: { code: "8.EE.7", title: "Linear Equations in One Variable", desc: "Identical to CCSS 8.EE.C.7.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.AR.1.2",
+    title: "Linear Equations from Graphs & Tables",
+    desc: "Write a linear equation in the form y = mx + b or in slope-intercept, standard, or point-slope form given information such as two points, a table, or a graph.",
+    quarters: ["Q1","PM3"],
+    nat: { code: "8.EE.B.5 / 8.F.B.4", title: "Slope & Linear Equations", desc: "8.EE.B.5: Graph proportional relationships, interpret unit rate as slope. 8.F.B.4: Construct a function to model a linear relationship; determine rate of change and initial value from tables, graphs, or descriptions.", note: "Florida integrates these into a unified equation-writing standard." },
+    tx: { code: "8.5B / 8.5I", title: "Linear Equations", desc: "8.5B: Represent linear proportional situations with tables, graphs, and equations. 8.5I: Write an equation in the form y = mx + b to model a linear relationship.", note: "Direct alignment." },
+    ca: { code: "8.EE.5 / 8.F.4", title: "Slope & Linear Equations", desc: "Identical to CCSS 8.EE.B.5 and 8.F.B.4.", note: "Same as CCSS." }
+  },
+
+  // ── Q2 ───────────────────────────────────────────────────────────────────────
+  {
+    code: "MA.8.AR.2.1",
+    title: "Solve Systems of Linear Equations Algebraically",
+    desc: "Solve systems of two linear equations in two variables algebraically (substitution and elimination), determining whether there is one solution, no solution, or infinitely many solutions.",
+    quarters: ["Q2","PM3"],
+    nat: { code: "8.EE.C.8b", title: "Systems Algebraically", desc: "Solve systems of two linear equations in two variables algebraically, and estimate solutions by graphing the equations. Solve simple cases by inspection.", note: "Direct alignment." },
+    tx: { code: "8.9", title: "Systems of Equations", desc: "Identify and verify the values of x and y that simultaneously satisfy two linear equations in the form y = mx + b from the intersections of their graphs, tables, and algebraically.", note: "Texas bundles graphical and algebraic methods together in 8.9." },
+    ca: { code: "8.EE.8b", title: "Systems Algebraically", desc: "Identical to CCSS 8.EE.C.8b.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.AR.2.2",
+    title: "Solve Systems Graphically & in Context",
+    desc: "Solve systems of two linear equations graphically; interpret the solution as the point of intersection; solve real-world problems using systems of equations.",
+    quarters: ["Q2","PM3"],
+    nat: { code: "8.EE.C.8a / 8.EE.C.8c", title: "Systems Graphically & in Context", desc: "8.EE.C.8a: Understand that solutions to a system of two linear equations correspond to points of intersection of their graphs. 8.EE.C.8c: Solve real-world problems leading to two linear equations in two variables.", note: "Direct alignment." },
+    tx: { code: "8.9", title: "Systems of Equations", desc: "Identify and verify solutions from graphs, tables, and algebraically.", note: "Direct alignment." },
+    ca: { code: "8.EE.8a / 8.EE.8c", title: "Systems Graphically & in Context", desc: "Identical to CCSS 8.EE.C.8a and 8c.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.AR.3.1",
+    title: "Determine if a Relation is a Function",
+    desc: "Determine whether a relation is a function by examining ordered pairs, tables, mappings, and graphs; use function notation.",
+    quarters: ["Q2","PM3"],
+    nat: { code: "8.F.A.1", title: "Define Functions", desc: "Understand that a function is a rule that assigns to each input exactly one output. The graph of a function is the set of ordered pairs consisting of an input and the corresponding output.", note: "Direct alignment." },
+    tx: { code: "8.5A", title: "Functions", desc: "Represent linear proportional situations with tables, graphs, and equations; represent linear non-proportional situations with tables, graphs, and equations; distinguish between proportional and non-proportional.", note: "Texas focuses on linear functions; function definition is implicit." },
+    ca: { code: "8.F.1", title: "Define Functions", desc: "Identical to CCSS 8.F.A.1.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.AR.3.2",
+    title: "Linear vs. Nonlinear Functions",
+    desc: "Given a table, graph, or equation, determine whether a function is linear or nonlinear and justify the determination.",
+    quarters: ["Q2","PM3"],
+    nat: { code: "8.F.A.3", title: "Linear vs. Nonlinear", desc: "Interpret the equation y = mx + b as defining a linear function, whose graph is a straight line; give examples of functions that are not linear.", note: "Direct alignment." },
+    tx: { code: "8.5I", title: "Linear & Nonlinear Functions", desc: "Identify examples of proportional and non-proportional functions that arise from mathematical and real-world problems in the form of a table, graph, or equation.", note: "Direct alignment." },
+    ca: { code: "8.F.3", title: "Linear vs. Nonlinear", desc: "Identical to CCSS 8.F.A.3.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.AR.3.3",
+    title: "Analyze & Represent Linear Functions",
+    desc: "Analyze and represent linear functions, including slope and y-intercept, from tables, graphs, equations, and verbal descriptions; compare two linear functions.",
+    quarters: ["Q2","PM3"],
+    nat: { code: "8.F.B.4 / 8.F.B.5", title: "Model & Describe Linear Functions", desc: "8.F.B.4: Construct a function to model a linear relationship; determine rate of change and initial value. 8.F.B.5: Describe qualitatively the functional relationship between two quantities by analyzing a graph.", note: "Direct alignment." },
+    tx: { code: "8.5B / 8.5E / 8.5F", title: "Linear Functions", desc: "8.5B: Represent with tables, graphs, equations. 8.5E: Solve problems involving direct variation. 8.5F: Distinguish between proportional and non-proportional linear situations.", note: "Texas spreads linear function analysis across multiple sub-standards." },
+    ca: { code: "8.F.4 / 8.F.5", title: "Model & Describe Linear Functions", desc: "Identical to CCSS 8.F.B.4 and 8.F.B.5.", note: "Same as CCSS." }
+  },
+
+  // ── Q3 ───────────────────────────────────────────────────────────────────────
+  {
+    code: "MA.8.GR.1.1",
+    title: "Rigid Transformations",
+    desc: "Identify and perform translations, reflections, and rotations of figures on the coordinate plane; determine if two figures are congruent using rigid transformations.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "8.G.A.1 / 8.G.A.2 / 8.G.A.3", title: "Rigid Motions & Congruence", desc: "8.G.A.1: Verify experimentally properties of rigid motions. 8.G.A.2: Understand that two-dimensional figures are congruent if one can be obtained from the other by rigid motions. 8.G.A.3: Describe the effect of dilations, translations, rotations, and reflections using coordinates.", note: "Direct alignment." },
+    tx: { code: "8.10A / 8.10B / 8.10C", title: "Transformations", desc: "8.10A: Generalize properties of orientation and congruence of rotations, reflections, translations, and dilations. 8.10B: Differentiate between transformations that preserve congruence and those that do not. 8.10C: Explain the effect of translations on figures.", note: "Direct alignment." },
+    ca: { code: "8.G.1 / 8.G.2 / 8.G.3", title: "Rigid Motions & Congruence", desc: "Identical to CCSS 8.G.A.1–3.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.GR.1.2",
+    title: "Dilations & Similarity",
+    desc: "Identify and perform dilations of figures on the coordinate plane; determine if two figures are similar using transformations including dilations.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "8.G.A.4", title: "Similarity & Dilations", desc: "Understand that a two-dimensional figure is similar to another if the second can be obtained from the first by a sequence of rotations, reflections, translations, and dilations; use coordinates to describe the effect of dilations.", note: "Direct alignment." },
+    tx: { code: "8.10D", title: "Dilations", desc: "Model the effect on linear and area measurements of dilated two-dimensional figures.", note: "Texas focuses on measuring effects; Florida focuses on the transformation itself." },
+    ca: { code: "8.G.4", title: "Similarity & Dilations", desc: "Identical to CCSS 8.G.A.4.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.GR.1.3",
+    title: "Pythagorean Theorem",
+    desc: "Use the Pythagorean Theorem to find the length of a missing side in a right triangle; apply to solve mathematical and real-world problems.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "8.G.B.7", title: "Pythagorean Theorem — Apply", desc: "Apply the Pythagorean Theorem to determine unknown side lengths in right triangles in real-world and mathematical problems in two and three dimensions.", note: "Direct alignment." },
+    tx: { code: "8.7C", title: "Pythagorean Theorem", desc: "Use the Pythagorean Theorem and its converse to solve problems.", note: "Texas combines theorem and converse in one standard." },
+    ca: { code: "8.G.7", title: "Pythagorean Theorem — Apply", desc: "Identical to CCSS 8.G.B.7.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.GR.1.4",
+    title: "Converse of the Pythagorean Theorem",
+    desc: "Use the converse of the Pythagorean Theorem to determine whether a triangle is a right triangle given its three side lengths.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "8.G.B.6", title: "Pythagorean Theorem — Proof/Converse", desc: "Explain a proof of the Pythagorean Theorem and its converse.", note: "CCSS emphasizes explanation of proof; Florida focuses on application of the converse." },
+    tx: { code: "8.7C", title: "Pythagorean Theorem & Converse", desc: "Use the Pythagorean Theorem and its converse to solve problems.", note: "Direct alignment." },
+    ca: { code: "8.G.6", title: "Pythagorean Theorem — Proof/Converse", desc: "Identical to CCSS 8.G.B.6. California frameworks require an informal proof using area models.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.GR.1.5",
+    title: "Distance in the Coordinate Plane",
+    desc: "Use the Pythagorean Theorem to find the distance between two points in the coordinate plane; apply to solve problems.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "8.G.B.8", title: "Distance Formula", desc: "Apply the Pythagorean Theorem to find the distance between two points in a coordinate system.", note: "Direct alignment." },
+    tx: { code: "8.7D", title: "Distance in the Coordinate Plane", desc: "Determine the distance between two points on a coordinate plane using the distance formula adapted from the Pythagorean Theorem.", note: "Direct alignment." },
+    ca: { code: "8.G.8", title: "Distance Formula", desc: "Identical to CCSS 8.G.B.8.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.GR.2.1",
+    title: "Volume of Cylinders, Cones & Spheres",
+    desc: "Solve mathematical and real-world problems involving volume of cylinders, cones, and spheres using the correct formulas.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "8.G.C.9", title: "Volume of Cylinders, Cones & Spheres", desc: "Know the formulas for the volumes of cones, cylinders, and spheres and use them to solve real-world and mathematical problems.", note: "Direct alignment." },
+    tx: { code: "8.6A / 8.6B / 8.7A", title: "Volume of 3D Figures", desc: "8.6A: Describe the volume formula V = Bh for a cylinder. 8.6B: Model the relationship between the volume of a cylinder and a cone having the same base area and height. 8.7A: Solve problems involving the volume of cylinders, cones, and spheres.", note: "Direct alignment; Texas explicitly develops the cylinder-cone relationship." },
+    ca: { code: "8.G.9", title: "Volume of Cylinders, Cones & Spheres", desc: "Identical to CCSS 8.G.C.9.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.DP.1.1",
+    title: "Scatter Plots & Associations",
+    desc: "Given a set of real-world bivariate numerical data, create and interpret a scatter plot; describe patterns of association (positive/negative, linear/nonlinear, clustering, outliers).",
+    quarters: ["Q3","PM3"],
+    nat: { code: "8.SP.A.1", title: "Scatter Plots", desc: "Construct and interpret scatter plots for bivariate measurement data to investigate patterns of association between two quantities. Describe patterns such as clustering, outliers, positive/negative association, linear association, and nonlinear association.", note: "Direct alignment." },
+    tx: { code: "8.11A / 8.5C", title: "Scatter Plots", desc: "8.11A: Construct a scatter plot and describe the observed data to address questions of association. 8.5C: Contrast bivariate sets of data that suggest linear relationships with those that do not.", note: "Direct alignment." },
+    ca: { code: "8.SP.1", title: "Scatter Plots", desc: "Identical to CCSS 8.SP.A.1.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.DP.1.2",
+    title: "Line of Best Fit",
+    desc: "Given a scatter plot, use or construct an informal line of best fit; use the equation of the line to make predictions; interpret slope and y-intercept in context.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "8.SP.A.2 / 8.SP.A.3", title: "Line of Best Fit", desc: "8.SP.A.2: Know that straight lines are widely used to model relationships between two quantitative variables; assess the model fit. 8.SP.A.3: Use the equation of a linear model to solve problems in the context of bivariate data, interpreting slope and intercept.", note: "Direct alignment." },
+    tx: { code: "8.11B / 8.11C", title: "Line of Best Fit", desc: "8.11B: Use a trend line that approximates the linear relationship between bivariate sets of data; predict values. 8.11C: Construct and interpret a scatterplot and describe trends.", note: "Direct alignment." },
+    ca: { code: "8.SP.2 / 8.SP.3", title: "Line of Best Fit", desc: "Identical to CCSS 8.SP.A.2 and 8.SP.A.3.", note: "Same as CCSS." }
+  },
+  {
+    code: "MA.8.DP.1.3",
+    title: "Two-Way Frequency Tables",
+    desc: "Given a two-way frequency table, interpret relative frequencies and determine if there is an association between the two categorical variables.",
+    quarters: ["Q3","PM3"],
+    nat: { code: "8.SP.A.4", title: "Two-Way Frequency Tables", desc: "Understand that patterns of association can also be seen in bivariate categorical data by displaying frequencies and relative frequencies in a two-way table. Construct and interpret a two-way table; use relative frequencies calculated for rows or columns to describe possible association.", note: "Direct alignment." },
+    tx: { code: "8.11A", title: "Two-Way Tables & Association", desc: "Construct a scatter plot and describe observed data. Texas addresses two-way tables within its broader data analysis standard for bivariate data.", note: "Texas addresses two-way categorical data less explicitly than CCSS/Florida." },
+    ca: { code: "8.SP.4", title: "Two-Way Frequency Tables", desc: "Identical to CCSS 8.SP.A.4.", note: "Same as CCSS." }
+  }
+] // end Grade 8
+
+}; // end DB
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentGrade   = 6;
+let currentQuarter = "Q1";
+let currentCode    = null;
+let searchQuery    = "";
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function getStandards() {
+  const all = DB[currentGrade] || [];
+  const filtered = all.filter(s => s.quarters.includes(currentQuarter));
+  if (!searchQuery) return filtered;
+  const q = searchQuery.toLowerCase();
+  return filtered.filter(s =>
+    s.code.toLowerCase().includes(q) ||
+    s.title.toLowerCase().includes(q) ||
+    s.desc.toLowerCase().includes(q)
+  );
+}
+
+// ─── RENDER LIST ─────────────────────────────────────────────────────────────
+function renderList() {
+  const standards = getStandards();
+  const list = document.getElementById("std-list");
+  const count = document.getElementById("std-count");
+  count.textContent = `${standards.length} standard${standards.length !== 1 ? "s" : ""}`;
+
+  if (standards.length === 0) {
+    list.innerHTML = `<div style="padding:20px;color:#6b7280;font-size:14px;">No standards match your search.</div>`;
+    return;
+  }
+
+  list.innerHTML = standards.map(s => {
+    const q = s.quarters.filter(q => q !== "PM3")[0] || "Q1";
+    const selected = s.code === currentCode ? " selected" : "";
+    return `
+      <div class="std-item${selected}" onclick="selectStandard('${s.code}')">
+        <div class="std-code">${s.code}</div>
+        <div class="std-title">${s.title}</div>
+        <span class="std-qtag qtag-${q}">${q}</span>
+      </div>`;
+  }).join("");
+}
+
+// ─── RENDER DETAIL ───────────────────────────────────────────────────────────
+function renderDetail(code) {
+  const all = DB[currentGrade] || [];
+  const s = all.find(x => x.code === code);
+  const panel = document.getElementById("detail-panel");
+  if (!s) {
+    panel.innerHTML = `<div class="empty-state"><h2>Standard not found</h2></div>`;
+    return;
+  }
+  const q = s.quarters.filter(q => q !== "PM3")[0] || "Q1";
+
+  const prereqs = PREREQS[s.code] || [];
+  const prereqsHtml = prereqs.length ? `
+    <div class="prereqs-section">
+      <div class="prereqs-header">Prior Knowledge &amp; Prerequisite Standards</div>
+      <div class="prereqs-grid">
+        ${prereqs.map(p => `
+          <div class="prereq-chip">
+            <div class="pc-grade">${p.grade}</div>
+            <div class="pc-code">${p.code}</div>
+            <div class="pc-desc">${p.desc}</div>
+          </div>`).join("")}
+      </div>
+    </div>` : "";
+
+  panel.innerHTML = `
+    <div class="fl-card">
+      <div class="fl-card-header">
+        <span class="flag-badge badge-fl">🌴 Florida BEST · SCPS</span>
+        <h2>${s.code}</h2>
+        <span class="std-qtag qtag-${q}" style="font-size:12px;">${q}</span>
+      </div>
+      <h3>${s.title}</h3>
+      <p>${s.desc}</p>
+    </div>
+
+    ${prereqsHtml}
+
+    <div class="comparison-grid">
+      ${cmpCard("nat", "🇺🇸 National (CCSS)", s.nat)}
+      ${cmpCard("tx",  "⭐ Texas (TEKS)",      s.tx)}
+      ${cmpCard("ca",  "🐻 California",         s.ca)}
+    </div>`;
+}
+
+function cmpCard(type, label, data) {
+  const badges = { nat: "badge-nat", tx: "badge-tx", ca: "badge-ca" };
+  return `
+    <div class="cmp-card ${type}">
+      <div class="cmp-header">
+        <span class="flag-badge ${badges[type]}">${label}</span>
+        <span class="cmp-code">${data.code}</span>
+      </div>
+      <h4>${data.title}</h4>
+      <p>${data.desc}</p>
+      ${data.note ? `<div class="alignment-note"><strong>Alignment note:</strong> ${data.note}</div>` : ""}
+    </div>`;
+}
+
+function renderEmpty() {
+  document.getElementById("detail-panel").innerHTML = `
+    <div class="empty-state">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      <h2>Select a standard</h2>
+      <p>Click any standard on the left to see the<br>National, Texas, and California alignments.</p>
+    </div>`;
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+function selectStandard(code) {
+  currentCode = code;
+  renderList();
+  renderDetail(code);
+}
+
+function setGrade(g) {
+  currentGrade = +g;
+  currentCode = null;
+  document.querySelectorAll(".grade-btn").forEach(b => {
+    b.classList.toggle("active", +b.dataset.grade === currentGrade);
+  });
+  renderList();
+  renderEmpty();
+}
+
+function setQuarter(q) {
+  currentQuarter = q;
+  currentCode = null;
+  document.querySelectorAll(".quarter-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.quarter === q);
+  });
+  renderList();
+  renderEmpty();
+}
+
+// ─── EVENT LISTENERS ─────────────────────────────────────────────────────────
+document.querySelectorAll(".grade-btn").forEach(b =>
+  b.addEventListener("click", () => setGrade(b.dataset.grade)));
+
+document.querySelectorAll(".quarter-btn").forEach(b =>
+  b.addEventListener("click", () => setQuarter(b.dataset.quarter)));
+
+document.getElementById("search-box").addEventListener("input", e => {
+  searchQuery = e.target.value.trim();
+  currentCode = null;
+  renderList();
+  renderEmpty();
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderList();
+</script>
+</body>
+
+<footer>
+  <strong>&copy; 2025 The Calculated Classroom &nbsp;&middot;&nbsp; Axiomatic Field LLC.</strong>
+  All rights reserved. This tool and its content — including standards alignment data, annotations, and prerequisite mappings —
+  are the intellectual property of The Calculated Classroom. Unauthorized reproduction, distribution, or commercial use
+  without written permission is strictly prohibited.
+</footer>
+
+</html>
