@@ -284,6 +284,89 @@
     .layout { grid-template-columns: 1fr; grid-template-rows: 300px 1fr; }
     .comparison-grid { grid-template-columns: 1fr; }
   }
+
+  /* ── IXL SECTION ─────────────────────────────────────────────── */
+  .ixl-section {
+    margin-top: 16px;
+    border-radius: var(--radius);
+    border: 1px solid #e8e0f0;
+    overflow: hidden;
+  }
+  .ixl-section-header {
+    display: flex; align-items: center; gap: 10px;
+    background: #3d2785; color: white;
+    padding: 10px 16px;
+  }
+  .ixl-badge {
+    background: #ff6c00; color: white;
+    font-size: 11px; font-weight: 900;
+    padding: 2px 8px; border-radius: 4px;
+    letter-spacing: 0.08em;
+  }
+  .ixl-section-header span {
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.04em; opacity: 0.9;
+  }
+  .ixl-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: #f9f7ff;
+  }
+  .ixl-col {
+    padding: 12px 14px;
+  }
+  .ixl-col:first-child {
+    border-right: 1px solid #e8e0f0;
+  }
+  .ixl-col-label {
+    font-size: 10px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: #3d2785; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ixl-col-label::after {
+    content: ""; flex: 1; height: 1px; background: #ddd6f7;
+  }
+  .ixl-adv-label { color: #ff6c00; }
+  .ixl-adv-label::after { background: #ffe0c0; }
+
+  .ixl-skill {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 6px 8px; border-radius: 6px;
+    background: white; border: 1px solid #e8e0f0;
+    margin-bottom: 5px; cursor: default;
+    transition: box-shadow 0.12s;
+  }
+  .ixl-skill:hover { box-shadow: 0 2px 6px rgba(61,39,133,0.1); }
+  .ixl-skill-code {
+    font-size: 11px; font-weight: 800;
+    color: white; background: #3d2785;
+    padding: 2px 6px; border-radius: 4px;
+    white-space: nowrap; flex-shrink: 0;
+    font-family: 'Courier New', monospace;
+  }
+  .ixl-skill-code.adv { background: #ff6c00; }
+  .ixl-skill-title {
+    font-size: 12px; color: #374151; line-height: 1.35;
+  }
+
+  .ixl-placeholder {
+    padding: 14px 10px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px; text-align: center;
+  }
+  .ixl-placeholder-icon { font-size: 20px; opacity: 0.35; }
+  .ixl-placeholder-text {
+    font-size: 11px; color: #9ca3af; font-style: italic; line-height: 1.4;
+  }
+  .ixl-placeholder-chip {
+    display: inline-block;
+    background: #f3f0ff; color: #7c6bbf;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 10px; border-radius: 10px;
+    border: 1px dashed #c4b8f0;
+    letter-spacing: 0.03em;
+  }
 </style>
 </head>
 <body>
@@ -2294,7 +2377,9 @@ function renderDetail(code) {
       ${cmpCard("nat", "🇺🇸 National (CCSS)", s.nat)}
       ${cmpCard("tx",  "⭐ Texas (TEKS)",      s.tx)}
       ${cmpCard("ca",  "🐻 California",         s.ca)}
-    </div>`;
+    </div>
+
+    ${ixlSection(s)}`;
 }
 
 function cmpCard(type, label, data) {
@@ -2308,6 +2393,42 @@ function cmpCard(type, label, data) {
       <h4>${data.title}</h4>
       <p>${data.desc}</p>
       ${data.note ? `<div class="alignment-note"><strong>Alignment note:</strong> ${data.note}</div>` : ""}
+    </div>`;
+}
+
+function ixlSection(s) {
+  const hasStd = s.ixl && s.ixl.standard && s.ixl.standard.length > 0;
+  const hasAdv = s.ixl && s.ixl.advanced && s.ixl.advanced.length > 0;
+
+  const skillTile = (item, adv) => `
+    <div class="ixl-skill">
+      <span class="ixl-skill-code${adv ? " adv" : ""}">${item.code}</span>
+      <span class="ixl-skill-title">${item.title}</span>
+    </div>`;
+
+  const placeholder = `
+    <div class="ixl-placeholder">
+      <div class="ixl-placeholder-icon">&#128336;</div>
+      <span class="ixl-placeholder-chip">Coming Soon</span>
+      <div class="ixl-placeholder-text">IXL skill codes will be added here</div>
+    </div>`;
+
+  return `
+    <div class="ixl-section">
+      <div class="ixl-section-header">
+        <span class="ixl-badge">IXL</span>
+        <span>Suggested Skills</span>
+      </div>
+      <div class="ixl-body">
+        <div class="ixl-col">
+          <div class="ixl-col-label">Standard</div>
+          ${hasStd ? s.ixl.standard.map(i => skillTile(i, false)).join("") : placeholder}
+        </div>
+        <div class="ixl-col">
+          <div class="ixl-col-label ixl-adv-label">Advanced</div>
+          ${hasAdv ? s.ixl.advanced.map(i => skillTile(i, true)).join("") : placeholder}
+        </div>
+      </div>
     </div>`;
 }
 
