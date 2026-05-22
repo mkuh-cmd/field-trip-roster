@@ -220,6 +220,33 @@
       .flow-grid { grid-template-columns: 1fr; }
     }
 
+    /* ── PRINT BUTTON ── */
+    .print-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 16px; border-radius: 20px;
+      background: var(--fl); color: white; border: none;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      margin-top: 10px; transition: opacity 0.15s;
+    }
+    .print-btn:hover { opacity: 0.85; }
+
+    /* ── PRINT STYLES ── */
+    @media print {
+      @page { size: portrait; margin: 1.2cm; }
+      header, .back-link, .print-btn { display: none !important; }
+      body { background: white; }
+      .page-intro { border: none; padding: 0 0 12px; }
+      .flow-grid {
+        grid-template-columns: 1fr;
+        padding: 0; gap: 16px;
+      }
+      .q4-section { margin: 16px 0 0; }
+      .cluster-grid { grid-template-columns: repeat(3, 1fr); }
+      .std-card { break-inside: avoid; }
+      .quarter-col { break-inside: avoid; }
+      footer { display: none; }
+    }
+
     /* ── Q4 SECTION ── */
     .q4-section {
       margin: 0 28px 32px;
@@ -349,6 +376,7 @@
     unlock later content and where the course bridges toward 9th grade Algebra.
     <strong>Grade 8 standards are marked with a teal border.</strong>
   </p>
+  <button class="print-btn" onclick="window.print()">&#128438; Print / Save as PDF</button>
   <div class="legend">
     <div class="legend-item"><div class="legend-pip" style="background:#bf360c;"></div>NSO &mdash; Number Sense &amp; Operations</div>
     <div class="legend-item"><div class="legend-pip" style="background:#4a148c;"></div>AR &mdash; Algebraic Reasoning</div>

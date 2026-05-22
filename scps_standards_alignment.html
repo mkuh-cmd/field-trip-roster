@@ -304,11 +304,13 @@
 <div class="controls">
   <div class="control-group">
     <span class="control-label">Standard</span>
+    <button class="grade-btn" data-grade="6">6th</button>
     <button class="grade-btn" data-grade="7">7th</button>
+    <button class="grade-btn" data-grade="8">8th</button>
   </div>
   <div class="control-group">
     <span class="control-label">Advanced</span>
-    <button class="grade-btn active" data-grade="6">RAMP 6</button>
+    <button class="grade-btn active" data-grade="0">RAMP 6</button>
   </div>
   <div class="control-group">
     <span class="control-label">Period</span>
@@ -2206,14 +2208,14 @@ function buildRamp6() {
 })();
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
-let currentGrade   = 6;
+let currentGrade   = 0;
 let currentQuarter = "Q1";
 let currentCode    = null;
 let searchQuery    = "";
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function getStandards() {
-  const all = currentGrade === 6 ? buildRamp6() : (DB[currentGrade] || []);
+  const all = currentGrade === 0 ? buildRamp6() : (DB[currentGrade] || []);
   const filtered = currentQuarter === "Q4"
     ? all.filter(s => s.quarters.includes("PM3"))  // Q4 = test prep review of all PM3 standards
     : all.filter(s => s.quarters.includes(currentQuarter));
@@ -2252,7 +2254,7 @@ function renderList() {
 
 // ─── RENDER DETAIL ───────────────────────────────────────────────────────────
 function renderDetail(code) {
-  const all = currentGrade === 6 ? buildRamp6() : (DB[currentGrade] || []);
+  const all = currentGrade === 0 ? buildRamp6() : (DB[currentGrade] || []);
   const s = all.find(x => x.code === code);
   const panel = document.getElementById("detail-panel");
   if (!s) {
